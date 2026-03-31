@@ -1,0 +1,24 @@
+Metadata-Version: 2.4
+Name: answer-engine-backend
+Version: 0.1.0
+Summary: Minimal FastAPI backend scaffold for the Answer Engine.
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi<1.0,>=0.115
+Requires-Dist: uvicorn[standard]<1.0,>=0.30
+
+# Answer Engine Backend
+
+Minimal FastAPI backend scaffold for local development.
+
+## Local install
+
+```powershell
+pip install -e .
+```
+
+## Run
+
+```powershell
+python -m uvicorn answer_engine_backend.main:app --host 127.0.0.1 --port 8761 --reload
+```

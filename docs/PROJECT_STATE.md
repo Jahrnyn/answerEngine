@@ -4,9 +4,9 @@
 
 ## 1. Current Status
 
-The Answer Engine project is in **V0 (pre-implementation) state**.
+The Answer Engine project is in **V0 early implementation state**.
 
-No runtime implementation exists yet.
+A minimal backend runtime foundation now exists.
 
 The system currently consists of:
 - architectural design
@@ -14,18 +14,18 @@ The system currently consists of:
 - domain model definition
 - decision records
 - documentation framework
-
-This documentation set acts as the **only source of truth** at this stage.
+- minimal backend application scaffold
 
 ---
 
 ## 2. Implemented Components
 
 ### 2.1 Backend
-Status: NOT IMPLEMENTED
+Status: PARTIALLY IMPLEMENTED
 
-- No FastAPI application exists
-- No services are implemented
+- FastAPI application scaffold exists under `apps/backend`
+- Unversioned `GET /health` endpoint exists
+- Local editable install is defined for the backend package
 - No pipeline execution logic exists
 - No CfHEE integration is implemented
 
@@ -168,8 +168,7 @@ The following are not yet resolved:
 
 The project is ready for:
 
-- initial repository setup
-- backend scaffolding
+- backend scaffold extension
 - pipeline skeleton implementation
 - first integration with CfHEE (read-only)
 
@@ -179,7 +178,8 @@ No production-ready behavior exists yet.
 
 ## 7. What DOES NOT exist yet (Important)
 
-- working API endpoints
+- no answering API endpoints
+- health endpoint only
 - functioning pipeline execution
 - retrieval integration
 - model inference
@@ -196,7 +196,7 @@ The project is considered:
 
 - Architecturally defined: YES
 - Ready for implementation: YES
-- Ready for testing: NO
+- Ready for backend foundation testing: YES
 - Ready for production: NO
 
 ---
@@ -204,9 +204,9 @@ The project is considered:
 ## 9. Next Step Reference
 
 See:
-- docs/NEXT_STEPS.md
+- docs/CURRENT_FOCUS.md
 
-This document defines the immediate next implementation target.
+This document defines the active implementation target.
 
 ---
 
@@ -215,8 +215,8 @@ This document defines the immediate next implementation target.
 The Answer Engine is currently:
 
 - fully designed
-- fully specified
-- not implemented
+- specified
+- minimally implemented at the backend foundation level
 
 All future work must:
 - follow the defined architecture

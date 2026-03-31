@@ -6,6 +6,10 @@
 
 Initial backend scaffold for the Answer Engine.
 
+Status:
+- minimal scaffold implemented
+- no pipeline behavior implemented
+
 ---
 
 ## CURRENT GOAL
