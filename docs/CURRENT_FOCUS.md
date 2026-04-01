@@ -4,32 +4,31 @@
 
 ## CURRENT FOCUS
 
-Stage Model Resolver skeleton for the Answer Engine backend.
+Retrieval Planning and Retrieval Execution V1 integration for the Answer Engine backend.
 
 Status:
-- stage-specific routing defaults are the active backend infrastructure target
-- no real model execution is in scope for this step
+- scope inference now produces bounded, traceable scope results
+- the next backend step is to replace retrieval-stage placeholders with practical CfHEE-backed behavior
 
 ---
 
 ## CURRENT GOAL
 
-Add a small central resolver for stage-specific model routing so model intent is configuration-driven and inspectable before real provider execution exists.
+Turn validated scope inference output into meaningful retrieval plans and non-stub retrieval execution while keeping later answer stages skeletal.
 
 ---
 
 ## SCOPE
 
 Included:
-- central stage model resolver
-- config-driven routing defaults for key V1 stages
-- inspectable routing output in the run payload
-- keeping stage modules free from direct model choice
+- using validated scopes from scope inference
+- practical retrieval planning rules
+- CfHEE-backed retrieval execution
+- deterministic and inspectable retrieval outputs
 
 Excluded:
-- real model/provider execution
-- real scope inference logic
-- real retrieval orchestration logic
+- answer generation implementation
+- answer verification implementation
 - persistence layer
 - frontend
 
@@ -40,20 +39,19 @@ Excluded:
 - backend imports successfully
 - `/health` remains working
 - `/runs/execute` remains working
-- routing output is visible and deterministic in run execution results
+- retrieval stages produce meaningful non-stub outputs
+- retrieval behavior remains deterministic and traceable
 
 ---
 
 ## NOT IN SCOPE
 
-- real scope inference
-- real retrieval orchestration
-- real context building logic
 - real model calls
-- UI development
+- persistence
+- frontend development
 
 ---
 
 ## NOTES
 
-This step establishes the central runtime hook for stage-specific model routing without changing later stub stage behavior into real model execution.
+This step should convert the next two pipeline stages from structural placeholders into a practical bounded V1 retrieval path.

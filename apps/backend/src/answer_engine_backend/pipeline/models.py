@@ -52,11 +52,15 @@ class ScopeReference(BaseModel):
 
 
 class ScopeInferenceResult(BaseModel):
-    primary_scope: ScopeReference
+    status: str = "ok"
+    primary_scope: ScopeReference | None = None
     secondary_scopes: list[ScopeReference] = Field(default_factory=list)
+    candidate_scopes: list[ScopeReference] = Field(default_factory=list)
+    rejected_scopes: list[ScopeReference] = Field(default_factory=list)
     confidence_scores: dict[str, float] = Field(default_factory=dict)
     validation_scores: dict[str, float] = Field(default_factory=dict)
     fallback_applied: bool = False
+    failure_reason: str | None = None
 
 
 class RetrievalRound(BaseModel):

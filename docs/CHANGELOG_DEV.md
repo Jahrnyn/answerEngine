@@ -24,3 +24,4 @@
 - Implemented Slice 2 CfHEE integration foundation with config-driven base URL settings, a thin external client, and developer-oriented `/cfhee/*` verification routes for health, capabilities, scope helpers, and retrieval wrapper testing.
 - Implemented Slice 3 with deterministic V1 Query Analysis and Answer Policy Resolution logic, replacing early placeholders in the pipeline skeleton while keeping later stages stubbed.
 - Implemented Slice 3.5 with a central Stage Model Resolver skeleton, config-driven default stage routing, and inspectable stage model routing metadata in the dev run output without adding real model execution.
+- Implemented Slice 4 with bounded V1 Scope Inference using deterministic candidate filtering, bounded CfHEE-backed retrieval validation, explicit narrow fallback behavior, and richer `ScopeInferenceResult` trace data.

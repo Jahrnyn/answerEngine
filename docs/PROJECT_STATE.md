@@ -38,7 +38,8 @@ Status: PARTIALLY IMPLEMENTED
 - Local editable install is defined for the backend package
 - Run-centric pipeline execution skeleton exists
 - Practical deterministic V1 logic exists for Query Analysis and Answer Policy Resolution
-- Explicit stub stage boundaries exist from scope inference through final response mapping
+- Practical bounded V1 scope inference exists with deterministic filtering and CfHEE-backed validation
+- Explicit stub stage boundaries exist from retrieval planning through final response mapping
 - Thin CfHEE client foundation exists
 - Central stage model resolver skeleton exists
 
@@ -82,7 +83,7 @@ Status: PARTIALLY IMPLEMENTED
 - Scope helper access exists
 - Retrieval wrapper skeleton exists
 - Dev-oriented backend verification routes exist
-- No pipeline integration exists
+- Pipeline integration exists for scope inference availability and validation probes
 - No knowledge promotion behavior
 
 ---
@@ -107,9 +108,10 @@ Includes:
 
 Current code state:
 - Query Analysis and Answer Policy Resolution use deterministic V1 rule-based behavior
-- later stages remain structural stub outputs
-- no real retrieval, model, or CfHEE behavior inside the pipeline
-- pipeline stages are not yet wired to the CfHEE client
+- Scope Inference uses bounded deterministic candidate filtering and CfHEE-backed retrieval validation
+- retrieval planning and later stages remain structural stub outputs
+- no real model behavior inside the pipeline
+- later retrieval and answer stages are not yet wired to real CfHEE retrieval behavior
 
 ---
 
@@ -198,7 +200,6 @@ The following are not yet resolved:
 - regeneration conditions in verification stage
 - practical latency budget targets
 - pipeline integration strategy for the CfHEE client
-- scope inference strategy implementation
 - retrieval orchestration implementation
 - persistence strategy for AnswerRun
 - rules for structured knowledge promotion into CfHEE
@@ -221,12 +222,12 @@ No production-ready behavior exists yet.
 
 - no answering API endpoints
 - no production-ready answering API endpoints
-- no real retrieval integration
+- no full retrieval planning and retrieval execution integration
 - no real model inference
 - UI interaction
 - trace visualization
 - implemented chat/session capability
-- pipeline stages using real CfHEE data
+- pipeline stages beyond scope inference using real CfHEE data
 
 The following DO exist in minimal structural form:
 - `/health`
@@ -237,6 +238,7 @@ The following DO exist in minimal structural form:
 - practical deterministic answer policy resolution
 - thin CfHEE client foundation
 - stage model resolver skeleton with deterministic routing defaults
+- bounded scope inference using CfHEE scope visibility and validation probes
 
 Any assumption that these exist is incorrect.
 

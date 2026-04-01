@@ -163,6 +163,9 @@ Logic:
 Model expectation:
 - uses a medium-capability model when model assistance is applied
 
+Current backend note:
+- the current backend slice may use deterministic interim ranking preparation before model-assisted ranking is implemented
+
 V1 execution limit:
 - maximum scopes passed into LLM ranking: 6
 
@@ -198,6 +201,7 @@ ValidatedScopes:
 - confirmed_secondary_scopes
 - validation_scores
 - fallback_applied (bool)
+- explicit no-reliable-scope outcome when validation remains insufficient
 
 ---
 
@@ -223,6 +227,7 @@ fallback must stay within:
 - Retrieval validation is mandatory for reliability
 - Scope inference MUST remain bounded by explicit execution limits in V1
 - model choice is resolved via routing policy, not by the stage itself
+- candidate, rejected, validation, and fallback decisions should remain visible in trace
 
 ---
 

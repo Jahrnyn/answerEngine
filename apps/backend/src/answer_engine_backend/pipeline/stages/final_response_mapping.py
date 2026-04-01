@@ -16,13 +16,15 @@ class FinalResponseMappingStage:
         source_mapping,
     ) -> FinalResponse:
         certainty = "high" if verification_result.confidence_score >= 0.8 else "medium"
+        inferred_scopes = []
+        if scope_inference.primary_scope is not None:
+            inferred_scopes.append(scope_inference.primary_scope)
+        inferred_scopes.extend(scope_inference.secondary_scopes)
+
         return FinalResponse(
             answer_text=answer_result.answer_text,
             sources=source_mapping,
-            inferred_scopes=[
-                scope_inference.primary_scope,
-                *scope_inference.secondary_scopes,
-            ],
+            inferred_scopes=inferred_scopes,
             certainty=certainty,
             limitations=verification_result.limitations,
             verification_summary={

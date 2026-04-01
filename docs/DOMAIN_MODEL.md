@@ -121,11 +121,19 @@ Notes:
 ### 4.2 ScopeInferenceResult
 
 ScopeInferenceResult:
-- primary_scope: ScopeReference
+- status: "ok" | "fallback" | "no_reliable_scope"
+- primary_scope: ScopeReference (optional)
 - secondary_scopes: list[ScopeReference] (optional)
+- candidate_scopes: list[ScopeReference] (optional)
+- rejected_scopes: list[ScopeReference] (optional)
 - confidence_scores: dict[scope_id -> float]
 - validation_scores: dict[scope_id -> float]
 - fallback_applied: bool
+- failure_reason: string (optional)
+
+Notes:
+- V1 may return `primary_scope = null` when no reliable scope is found
+- candidate and rejected scopes are trace-oriented support fields for inspectability
 
 ---
 

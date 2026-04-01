@@ -1,5 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
+from answer_engine_backend.cfhee_client import CfheeClientError
 from answer_engine_backend.pipeline import RunExecutor
 from answer_engine_backend.pipeline.models import AnswerRun, ExecuteRunRequest
 
@@ -10,4 +11,7 @@ run_executor = RunExecutor()
 
 @router.post("/execute", response_model=AnswerRun)
 def execute_run(request: ExecuteRunRequest) -> AnswerRun:
-    return run_executor.execute(request.query)
+    try:
+        return run_executor.execute(request.query)
+    except CfheeClientError as error:
+        raise HTTPException(status_code=error.status_code, detail=error.to_detail()) from error
