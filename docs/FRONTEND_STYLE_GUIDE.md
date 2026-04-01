@@ -56,23 +56,20 @@ All components must follow consistent:
 
 ## 3. Layout Structure
 
-The UI follows a 3-column layout:
+The V1 UI is centered on a main question/answer surface with an optional inspect panel.
 
-LEFT:
-- conversation list
-- session management
+MAIN SURFACE:
+- question input
+- answer output
+- clear answer state and limitations when present
 
-CENTER:
-- chat interface
-- message stream
-- input area
-
-RIGHT:
+OPTIONAL INSPECT / SIDE PANEL:
 - sources panel
 - context viewer
 - trace / debug panel
+- verification details
 
-This layout must remain stable across iterations.
+This layout should remain simple, stable, and developer-friendly in V1.
 
 ---
 
@@ -149,47 +146,43 @@ Style:
 
 ---
 
-## 6. Chat UI Rules
+## 6. Main Surface Rules
 
-### Messages
+### Question Input
 
-- user messages: right-aligned
-- assistant messages: left-aligned
-
----
-
-### Message Blocks
-
-- clear separation between messages
-- consistent padding
-- readable line spacing
-
----
-
-### Input Area
-
-- fixed at bottom
-- clearly separated from chat
+- clearly separated from the answer surface
 - must support multiline input
+- primary action should be obvious
+
+---
+
+### Answer Surface
+
+- answer content must be easy to scan
+- source-backed output should feel primary
+- limitations or uncertainty must be visible without opening inspect mode
+- the final answer surface should display verified output only
+- do not present draft, preview, or provisional answer text in V1
+
+---
+
+### Optional Conversation Support
+
+- conversation or history UI may exist later
+- it is not the primary V1 layout model
+- do not make the interface thread-first by default
 
 ---
 
 ## 7. Panels
 
-### 7.1 Left Panel
-
-- list-based layout
-- scrollable
-- active item clearly highlighted
-
----
-
-### 7.2 Right Panel
+### 7.1 Inspect Panel
 
 Contains:
 - sources
 - context
 - trace
+- verification details
 
 Must support:
 - tabbed or section-based view
@@ -202,6 +195,7 @@ Must support:
 
 The UI must support visibility of:
 
+- run progress / pipeline status
 - inferred scopes
 - retrieved chunks
 - context pack
@@ -211,6 +205,12 @@ The UI must support visibility of:
 This can be:
 - a dedicated panel
 - or a toggleable debug mode
+
+Status visibility may include:
+- scope inference running
+- retrieval running
+- answer generation running
+- verification running
 
 ---
 
@@ -271,5 +271,6 @@ It is NOT:
 - a marketing UI
 - a consumer-grade polished product
 - visually experimental
+- a chat-thread-first product UI
 
 It is a working interface for a high-trust answering system.

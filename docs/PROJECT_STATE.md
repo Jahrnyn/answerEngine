@@ -20,6 +20,8 @@ The documented V1 direction is now:
 - run-centric, not chat-centric
 - centered on `AnswerRun` as the primary runtime unit
 - focused on one question -> one grounded answer
+- keeps strong hybrid scope inference as a core capability
+- keeps execution bounded for practical local runs
 - not focused on long continuous conversation handling
 
 ---
@@ -91,8 +93,7 @@ Includes:
 - Multi-stage Retrieval
 - Context Assembly
 - Answer Generation
-- Evidence Verification
-- Response Evaluation
+- Answer Verification
 
 ---
 
@@ -103,8 +104,7 @@ Defined in:
 Includes:
 - AnswerRun
 - AnswerPolicy
-- EvidenceVerificationResult
-- ResponseEvaluationResult
+- VerificationResult
 - ChatSession (optional)
 - ChatMessage (optional)
 - Retrieval structures
@@ -168,7 +168,9 @@ The following are not yet resolved:
 - exact prompt structure
 - token budgeting strategy
 - optimal chunk selection strategy
-- regeneration conditions in verification stages
+- bounded scope inference thresholds
+- regeneration conditions in verification stage
+- practical latency budget targets
 - persistence strategy for AnswerRun
 - rules for structured knowledge promotion into CfHEE
 

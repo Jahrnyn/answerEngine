@@ -24,7 +24,7 @@ Query Analysis
 ↓
 Answer Policy Resolution
 ↓
-Scope Inference (Hybrid)
+Scope Inference (Hybrid, Bounded)
 ↓
 Retrieval Planning
 ↓
@@ -34,9 +34,7 @@ Context Assembly
 ↓
 Answer Generation
 ↓
-Evidence Verification
-↓
-Response Evaluation
+Answer Verification
 ↓
 Final Response
 
@@ -72,9 +70,11 @@ QueryAnalysisResult:
 - normalized_query
 - intent_type
 - requires_retrieval (bool)
-- query_variants (optional list)
+- max query variants: 2–3
 
 #### Notes
+- `conversation_context` is optional support only
+- V1 must not depend on long conversation state to answer correctly
 - This stage MUST NOT perform retrieval
 - This stage MUST NOT modify scope
 
@@ -94,6 +94,7 @@ Resolve backend/runtime controls for the current run.
 - decide runtime answering constraints for the run
 - set retrieval limits and defaults
 - set verification strictness
+- set regeneration allowance
 - remain internal to the backend/runtime
 
 #### Outputs
@@ -102,6 +103,8 @@ AnswerPolicy:
 - retrieval_required: bool
 - max_retrieval_rounds: int
 - default_top_k: int
+- allow_multi_scope: bool
+- allow_regeneration: bool
 - verification_profile: string
 - response_style: string
 
@@ -112,10 +115,13 @@ AnswerPolicy:
 
 ---
 
-### 3.3 Scope Inference Stage (Hybrid)
+### 3.3 Scope Inference Stage (Hybrid, Bounded)
 
 #### Purpose
 Determine relevant CfHEE scope(s) without user input.
+
+Scope inference remains a core capability in V1.
+It must stay hybrid and strong, but it must also remain explicitly budgeted for local execution.
 
 ---
 
@@ -123,13 +129,16 @@ Determine relevant CfHEE scope(s) without user input.
 
 Inputs:
 - normalized_query
-- conversation_context
+- conversation_context (optional)
 - available_scopes (from CfHEE)
 
 Logic:
 - keyword matching
 - scope metadata hints
 - lightweight continuity hints when conversation context exists
+
+V1 execution limit:
+- maximum candidate scopes after heuristic filtering: 12
 
 Output:
 - candidate_scopes (list)
@@ -146,6 +155,9 @@ Logic:
 - evaluate semantic relevance
 - rank scopes
 - assign confidence
+
+V1 execution limit:
+- maximum scopes passed into LLM ranking: 6
 
 Output:
 RankedScopes:
@@ -165,18 +177,44 @@ Logic:
 - perform lightweight retrieval probe
 - validate actual relevance
 
+V1 execution limits:
+- maximum scopes validated by retrieval probe: 3
+- maximum scopes carried into main retrieval: 2
+
+V1 limit:
+- max retrieval rounds: 2
+
 Output:
 ValidatedScopes:
 
 - confirmed_primary_scope
 - confirmed_secondary_scopes
 - validation_scores
+- fallback_applied (bool)
+
+---
+
+#### Scope Failure Fallback
+
+If no reliable scope is produced:
+- a narrow broader fallback may be attempted once
+- the fallback must remain within the same visible scope hierarchy
+- the fallback must be explicit in trace
+
+If fallback still does not produce reliable scope evidence:
+- do not continue with uncontrolled scope expansion
+- return an explicit no-reliable-scope or no-evidence style response
+
+fallback must stay within:
+- same workspace
+- same domain
 
 ---
 
 #### Notes
 - Scope inference MUST NOT rely on LLM alone
 - Retrieval validation is mandatory for reliability
+- Scope inference MUST remain bounded by explicit execution limits in V1
 
 ---
 
@@ -204,6 +242,10 @@ RetrievalPlan:
 - - top_k
 - - strategy_type
 - fallback_rules
+
+#### Notes
+- V1 planning must respect the bounded scope set from scope inference
+- V1 retrieval planning must not silently broaden scope beyond validated or explicit fallback scope
 
 ---
 
@@ -281,7 +323,7 @@ Generate response using model.
 #### Execution
 - build prompt
 - call model provider
-- support streaming
+- may support runtime/provider streaming internally
 
 #### Output
 AnswerResult:
@@ -293,78 +335,65 @@ AnswerResult:
 #### Notes
 - Model provider must be abstracted
 - Prompt construction must be traceable
+- verification requires a complete candidate answer
+- V1 does NOT stream unverified final answer text directly to the user
+- V1 may expose pipeline progress or status updates instead of answer-text streaming
 
 ---
 
-### 3.8 Evidence Verification Stage
+### 3.8 Answer Verification Stage
 
 #### Purpose
-Ensure the generated answer is supported by retrieved evidence.
+Determine whether the generated answer is reliable enough to keep for V1.
+
+Verification runs only after a complete candidate answer exists.
 
 #### Inputs
+- user_query
 - answer_result
 - context_pack
 - validated_scopes
+- answer_policy
 
 #### Checks
 
 ##### 1. Grounding Check
 - verify claims exist in context
 
-##### 2. Uncertainty Check
-- detect unsupported claims
-
-##### 3. Scope Consistency Check
+##### 2. Scope Consistency Check
 - ensure no cross-scope contamination
 
-#### Output
-EvidenceVerificationResult:
+##### 3. Coverage / Adequacy Check
+- verify the answer addresses the user question sufficiently for V1
 
-- grounded (bool)
-- uncertainty_flags
-- scope_consistency_ok (bool)
-- requires_regeneration (bool)
-
----
-
-### 3.9 Response Evaluation Stage
-
-#### Purpose
-Evaluate whether the evidence-grounded answer actually satisfies the question.
-
-#### Inputs
-- user_query
-- answer_result
-- evidence_verification_result
-- answer_policy
-
-#### Checks
-
-##### 1. Coverage Check
-- verify question coverage
-
-##### 2. Response Quality Check
-- verify the response follows the intended answer shape for the run
-
-##### 3. Final Handling Decision
-- decide whether to keep the answer, mark limitations, or regenerate
+##### 4. Final Decision Check
+- decide whether to keep the answer
+- decide whether to keep it with explicit limitations
+- decide whether one regeneration attempt is justified
 
 #### Output
-ResponseEvaluationResult:
+VerificationResult:
 
-- coverage_ok (bool)
-- response_quality_ok (bool)
+- grounded: bool
+- scope_consistency_ok: bool
+- coverage_ok: bool
+- adequacy_ok: bool
+- uncertainty_flags: list[string]
 - limitations: list[string]
-- requires_regeneration (bool)
+- decision: "keep" | "limit" | "regenerate" | "cannot_answer"
+- requires_regeneration: bool
 
-#### Optional Actions
-- regenerate answer
-- downgrade confidence
-- inject uncertainty message
+confidence_score: float (0.0–1.0)
+
+#### Regeneration Rule (V1)
+
+- maximum regeneration attempts: 1
+- regeneration is optional and controlled by `AnswerPolicy.allow_regeneration`
+- if the regenerated answer is still unacceptable, return an explicit limited, uncertain, or cannot-answer response
 
 ---
 
-### 3.10 Final Response Stage
+### 3.9 Final Response Stage
 
 #### Purpose
 Prepare response for UI.
@@ -375,8 +404,14 @@ FinalResponse:
 - answer_text
 - sources
 - inferred_scopes
+- certainty
+- limitations
 - verification_summary
 - trace_reference
+
+#### Notes
+- the user-visible final answer is shown only after verification
+- V1 may expose non-answer run states such as scope inference, retrieval, generation, and verification progress
 
 ---
 
@@ -394,8 +429,7 @@ AnswerRun:
 - retrieval_result
 - context_pack
 - answer_result
-- evidence_verification_result
-- response_evaluation_result
+- verification_result
 - timings
 - errors
 
@@ -428,17 +462,41 @@ Failures must be surfaced, not hidden.
 
 ---
 
-## 6. Failure Handling
+## 6. V1 Execution Budget
 
-Examples:
+V1 is designed for practical local execution, including smaller local models.
 
-- no relevant scope -> explicit response
-- empty retrieval -> return "no evidence"
-- low confidence -> mark answer as uncertain
+Design target:
+- one bounded run for one grounded answer
+- bounded scope inference before main retrieval
+- at most one regeneration attempt
+- no unbounded retry loops
+
+Latency target:
+- optimize for a responsive local run rather than exhaustive search
+- prefer explicit limitation responses over slow cascading retries
+
+Target latency (V1):
+- typical: 5–20 seconds
+- soft upper bound: 20–25 seconds
+
+The exact numeric latency target is implementation-dependent and not yet verified in code.
+The architectural requirement is that V1 remain budgeted and bounded by design.
 
 ---
 
-## 7. Extensibility Rules
+## 7. Failure Handling
+
+Examples:
+
+- no reliable scope after bounded fallback -> explicit no-reliable-scope response
+- empty retrieval -> return "no evidence"
+- low confidence -> mark answer as uncertain
+- verification failure after one allowed regeneration -> return limited or cannot-answer response
+
+---
+
+## 8. Extensibility Rules
 
 New features must:
 - map to an existing stage OR
@@ -448,7 +506,7 @@ No implicit logic insertion allowed.
 
 ---
 
-## 8. Summary
+## 9. Summary
 
 The Answer Engine pipeline is:
 
@@ -456,5 +514,6 @@ The Answer Engine pipeline is:
 - multi-stage
 - traceable
 - grounded
+- bounded for local execution
 
 It transforms user queries into validated answers through controlled execution, not emergent agent behavior.

@@ -81,6 +81,9 @@ This is implemented as a hybrid approach:
 - LLM-assisted ranking
 - retrieval-based validation
 
+In V1 this remains a strong core capability, not a trivial heuristic shortcut.
+It must also remain bounded by explicit execution limits so local runs stay practical.
+
 The user does NOT select scope manually.
 
 ---
@@ -157,9 +160,7 @@ Context Assembly
 ↓
 Answer Generation
 ↓
-Evidence Verification
-↓
-Response Evaluation
+Answer Verification
 ↓
 Final Response
 
@@ -193,12 +194,14 @@ Each stage produces structured outputs that can be inspected.
 #### Answer Policy Resolver
 - resolves backend/runtime answering controls
 - sets retrieval and verification defaults
+- sets bounded execution constraints for the run
 - is internal, not user-facing
 
 #### Scope Inference Service
 - candidate scope selection
 - ranking and confidence scoring
 - validation via retrieval
+- bounded fallback handling when no reliable scope is found
 
 #### Retrieval Planner
 - decides retrieval strategy
@@ -223,13 +226,13 @@ Each stage produces structured outputs that can be inspected.
 
 #### Answer Generator
 - executes model calls
-- supports streaming
+- may support provider/runtime streaming internally
 - attaches metadata
 
 #### Answer Verifier
-- performs evidence verification
-- performs response evaluation
-- may trigger re-run or adjustment
+- performs combined V1 verification
+- determines keep, limitation, or single regeneration decision
+- may trigger at most one re-run
 
 #### Trace Service
 - records full execution trace
@@ -266,9 +269,12 @@ OPTIONAL INSPECT / SIDE PANEL:
 ### 6.3 Key UI Concepts
 
 - the main question/answer surface is primary in V1
+- the final answer text is shown only after verification
+- pipeline progress or status updates may be shown during execution
 - trace is always accessible when inspection is needed
 - answers are inspectable
 - developer mode exposes deeper details
+- conversation/session UI is optional support, not the primary V1 interaction model
 
 ---
 
@@ -289,6 +295,8 @@ The system must support:
 - synchronous generation
 - streaming generation
 - model metadata access
+
+In V1, provider/runtime streaming support does not imply streaming unverified final answer text to the user.
 
 ---
 
@@ -319,10 +327,27 @@ Examples:
 - no relevant context -> explicit response
 - low confidence -> uncertainty surfaced
 - retrieval failure -> visible error
+- no reliable scope after bounded fallback -> explicit limitation response
 
 ---
 
-## 10. Non-Goals (V1)
+## 10. V1 Execution Budget
+
+V1 is designed for bounded local execution.
+
+This means:
+- bounded scope inference before main retrieval
+- bounded retrieval planning
+- a single combined verification stage
+- at most one regeneration attempt
+- explicit limitation responses instead of unbounded retries
+
+The exact runtime numbers are implementation concerns.
+The architectural requirement is that V1 remains budgeted by design for local models.
+
+---
+
+## 11. Non-Goals (V1)
 
 The system does NOT aim to:
 
@@ -335,7 +360,7 @@ The system does NOT aim to:
 
 ---
 
-## 11. Evolution Direction
+## 12. Evolution Direction
 
 Future extensions may include:
 
@@ -348,7 +373,7 @@ These are intentionally deferred.
 
 ---
 
-## 12. Summary
+## 13. Summary
 
 The Answer Engine is:
 

@@ -58,12 +58,15 @@ AnswerRun:
 - retrieval_result: RetrievalResult
 - context_pack: ContextPack
 - answer_result: AnswerResult
-- evidence_verification_result: EvidenceVerificationResult
-- response_evaluation_result: ResponseEvaluationResult
+- verification_result: VerificationResult
 
 - conversation_ref: ConversationRef (optional)
 - timings: TimingInfo
 - errors: list (optional)
+
+Notes:
+- `AnswerRun` remains the primary V1 execution entity
+- optional conversation support may link to a run but is not the primary reasoning substrate
 
 ---
 
@@ -106,6 +109,10 @@ QueryAnalysisResult:
 - requires_retrieval: bool
 - query_variants: list[string] (optional)
 
+Notes:
+- `conversation_context` is optional support to this stage
+- V1 must not depend on ongoing conversation state as a primary reasoning dependency
+
 ---
 
 ### 4.2 ScopeInferenceResult
@@ -115,6 +122,7 @@ ScopeInferenceResult:
 - secondary_scopes: list[ScopeReference] (optional)
 - confidence_scores: dict[scope_id -> float]
 - validation_scores: dict[scope_id -> float]
+- fallback_applied: bool
 
 ---
 
@@ -139,6 +147,8 @@ AnswerPolicy:
 - retrieval_required: bool
 - max_retrieval_rounds: int
 - default_top_k: int
+- allow_multi_scope: bool
+- allow_regeneration: bool
 - verification_profile: string
 - response_style: string
 
@@ -242,27 +252,27 @@ TokenUsage:
 
 ---
 
-### 4.15 EvidenceVerificationResult
+### 4.15 VerificationResult
 
-EvidenceVerificationResult:
+Practical combined V1 verification result.
+
+VerificationResult:
 - grounded: bool
-- uncertainty_flags: list[string]
 - scope_consistency_ok: bool
-- requires_regeneration: bool
-
----
-
-### 4.16 ResponseEvaluationResult
-
-ResponseEvaluationResult:
 - coverage_ok: bool
-- response_quality_ok: bool
+- adequacy_ok: bool
+- uncertainty_flags: list[string]
 - limitations: list[string]
+- decision: "keep" | "limit" | "regenerate" | "cannot_answer"
 - requires_regeneration: bool
+
+Notes:
+- combines evidence and response checks into one V1 structure
+- supports a bounded final decision for local execution
 
 ---
 
-### 4.17 TimingInfo
+### 4.16 TimingInfo
 
 TimingInfo:
 - total_time_ms: int
@@ -280,8 +290,14 @@ FinalResponse:
 - answer_text: string
 - sources: list[SourceReference]
 - inferred_scopes: list[ScopeReference]
+- certainty: "high" | "medium" | "low" | "uncertain"
+- limitations: list[string]
 - verification_summary: dict
 - trace_id: string
+
+Notes:
+- must be strong enough for a direct question/answer surface
+- should surface answer limits explicitly rather than hide them
 
 ---
 

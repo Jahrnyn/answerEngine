@@ -41,6 +41,12 @@ Reason: combining deterministic and probabilistic methods improves reliability a
 
 ---
 
+## ADR-006A
+Scope inference remains a strong V1 capability but must be bounded by execution limits.
+Reason: the module should retain high-trust scope inference quality while staying practical for local execution.
+
+---
+
 ## ADR-007
 Retrieval is a multi-stage process, not a single operation.
 Reason: better coverage, validation, and comparison across scopes.
@@ -232,8 +238,8 @@ Reason: the pipeline must produce a single traceable execution record that binds
 ---
 
 ## ADR-039
-Verification is split into evidence verification and response evaluation.
-Reason: grounding against evidence and judging whether the response satisfactorily answers the question are distinct checks and should remain separately traceable.
+V1 uses a single combined verification stage.
+Reason: grounding, scope consistency, coverage, and final keep or limitation decisions should remain explicit without overcomplicating the runtime for V1.
 
 ---
 
@@ -252,3 +258,33 @@ Reason: CfHEE remains the external knowledge and memory dependency and must not 
 ## ADR-042
 V1 frontend UX is a main question/answer surface with an optional inspect panel.
 Reason: the initial user experience should stay aligned with run-centric answering while still exposing trace, sources, context, and verification details when needed.
+
+---
+
+## ADR-043
+Regeneration is limited to at most one retry in V1.
+Reason: bounded retries are necessary to keep local execution practical and to avoid hidden loops.
+
+---
+
+## ADR-044
+V1 has an explicit latency and execution budget target.
+Reason: local-first answering must remain bounded in scope inference, retrieval, verification, and regeneration rather than drifting into slow exhaustive behavior.
+
+---
+
+## ADR-045
+If scope inference fails, the system may attempt a narrow broader fallback once and must otherwise return an explicit limitation response.
+Reason: the system should preserve usefulness without allowing uncontrolled scope expansion or hidden fallback behavior.
+
+---
+
+## ADR-046
+Conversation and session state are optional support in V1, not a core reasoning substrate.
+Reason: V1 is designed around one run producing one grounded answer, with lightweight conversation linkage only when helpful.
+
+---
+
+## ADR-047
+V1 does not stream unverified final answer text to the user.
+Reason: verification is post-generation, and preserving high-trust verified-output semantics is more important than immediate token streaming in V1.

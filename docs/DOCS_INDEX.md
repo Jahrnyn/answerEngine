@@ -43,8 +43,7 @@ Includes:
 - multi-stage retrieval
 - context assembly
 - answer generation
-- evidence verification
-- response evaluation
+- answer verification
 
 This is the most critical execution document.
 Any change to runtime behavior must be reflected here.
@@ -58,6 +57,7 @@ Includes:
 - answer run
 - answer policy
 - optional chat session / message support
+- verification result
 - context pack
 - scope references
 - retrieval results
@@ -175,7 +175,8 @@ Frontend UI consistency rules.
 
 Includes:
 - layout structure
-- panel system (chat + trace + sources)
+- main question/answer surface
+- optional inspect panel
 - styling constraints
 
 ---
