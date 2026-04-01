@@ -23,3 +23,4 @@
 - Implemented Slice 1 backend pipeline skeleton with a `RunExecutor`, explicit stub stage boundaries, a dev-oriented `POST /runs/execute` route, and deterministic `AnswerRun`-like output assembly.
 - Implemented Slice 2 CfHEE integration foundation with config-driven base URL settings, a thin external client, and developer-oriented `/cfhee/*` verification routes for health, capabilities, scope helpers, and retrieval wrapper testing.
 - Implemented Slice 3 with deterministic V1 Query Analysis and Answer Policy Resolution logic, replacing early placeholders in the pipeline skeleton while keeping later stages stubbed.
+- Implemented Slice 3.5 with a central Stage Model Resolver skeleton, config-driven default stage routing, and inspectable stage model routing metadata in the dev run output without adding real model execution.

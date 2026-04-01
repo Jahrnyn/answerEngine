@@ -51,6 +51,7 @@ AnswerRun:
 - query: string
 - created_at: datetime
 - answer_policy: AnswerPolicy
+- stage_model_routing: list[StageModelConfig] (optional in V1 skeleton)
 
 - query_analysis: QueryAnalysisResult
 - scope_inference: ScopeInferenceResult
@@ -68,6 +69,7 @@ AnswerRun:
 Notes:
 - `AnswerRun` remains the primary V1 execution entity
 - optional conversation support may link to a run but is not the primary reasoning substrate
+- stage model routing may be attached for execution inspectability without embedding provider execution logic into stage code
 
 ---
 
@@ -161,7 +163,7 @@ Notes:
 
 ### 4.5 StageModelConfig
 
-Conceptual model routing entry.
+Model routing entry for a pipeline stage.
 
 StageModelConfig:
 - stage_id: string
@@ -170,9 +172,9 @@ StageModelConfig:
 - parameters: dict (optional)
 
 Notes:
-- conceptual only
-- describes stage-specific model routing without binding implementation
-- external to core `AnswerRun` execution data
+- kept minimal so stage-specific routing stays inspectable
+- does not imply provider execution exists
+- may be attached to `AnswerRun` trace data without making model selection part of stage-local logic
 
 ---
 

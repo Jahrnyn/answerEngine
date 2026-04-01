@@ -1,4 +1,5 @@
 from answer_engine_backend.pipeline.models import AnswerRun, StageTimer, new_run_id, utc_now
+from answer_engine_backend.pipeline.stage_model_resolver import StageModelResolver
 from answer_engine_backend.pipeline.stages import (
     AnswerGenerationStage,
     AnswerPolicyResolutionStage,
@@ -14,6 +15,7 @@ from answer_engine_backend.pipeline.stages import (
 
 class RunExecutor:
     def __init__(self) -> None:
+        self.stage_model_resolver = StageModelResolver()
         self.query_analysis_stage = QueryAnalysisStage()
         self.answer_policy_resolution_stage = AnswerPolicyResolutionStage()
         self.scope_inference_stage = ScopeInferenceStage()
@@ -27,6 +29,14 @@ class RunExecutor:
     def execute(self, query: str) -> AnswerRun:
         timer = StageTimer()
         run_id = new_run_id()
+        stage_model_routing = self.stage_model_resolver.resolve_many(
+            [
+                "query_analysis",
+                "scope_inference_ranking",
+                "answer_generation",
+                "answer_verification",
+            ]
+        )
 
         timer.start_stage()
         query_analysis = self.query_analysis_stage.execute(query)
@@ -90,6 +100,7 @@ class RunExecutor:
             query=query,
             created_at=utc_now(),
             answer_policy=answer_policy,
+            stage_model_routing=stage_model_routing,
             query_analysis=query_analysis,
             scope_inference=scope_inference,
             retrieval_plan=retrieval_plan,

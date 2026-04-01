@@ -40,6 +40,7 @@ Status: PARTIALLY IMPLEMENTED
 - Practical deterministic V1 logic exists for Query Analysis and Answer Policy Resolution
 - Explicit stub stage boundaries exist from scope inference through final response mapping
 - Thin CfHEE client foundation exists
+- Central stage model resolver skeleton exists
 
 ---
 
@@ -54,11 +55,11 @@ Status: NOT IMPLEMENTED
 ---
 
 ### 2.3 Model Integration
-Status: NOT IMPLEMENTED
+Status: PARTIALLY IMPLEMENTED
 
 - No Ollama integration
 - No model provider abstraction
-- No stage-specific model routing
+- Stage-specific model routing skeleton exists with config-driven defaults and inspectable run output
 - No real generation or streaming logic
 
 ---
@@ -128,6 +129,7 @@ Includes:
 
 Current code state:
 - `AnswerRun`-like execution payload assembled by the backend skeleton
+- stage model routing metadata may be attached to run output for inspectability
 - no persistence
 
 ---
@@ -195,7 +197,6 @@ The following are not yet resolved:
 - bounded scope inference thresholds
 - regeneration conditions in verification stage
 - practical latency budget targets
-- stage-specific model routing configuration
 - pipeline integration strategy for the CfHEE client
 - scope inference strategy implementation
 - retrieval orchestration implementation
@@ -235,6 +236,7 @@ The following DO exist in minimal structural form:
 - practical deterministic query analysis
 - practical deterministic answer policy resolution
 - thin CfHEE client foundation
+- stage model resolver skeleton with deterministic routing defaults
 
 Any assumption that these exist is incorrect.
 

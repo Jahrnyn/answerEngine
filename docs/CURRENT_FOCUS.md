@@ -4,34 +4,32 @@
 
 ## CURRENT FOCUS
 
-Query Analysis and Answer Policy Resolution V1 for the Answer Engine backend.
+Stage Model Resolver skeleton for the Answer Engine backend.
 
 Status:
-- deterministic V1 stage logic implemented
-- existing pipeline execution route now exposes more meaningful early-stage outputs
+- stage-specific routing defaults are the active backend infrastructure target
+- no real model execution is in scope for this step
 
 ---
 
 ## CURRENT GOAL
 
-Replace early placeholder pipeline behavior with practical deterministic V1 logic before real scope inference and retrieval are implemented.
+Add a small central resolver for stage-specific model routing so model intent is configuration-driven and inspectable before real provider execution exists.
 
 ---
 
 ## SCOPE
 
 Included:
-- query normalization
-- simple intent classification
-- explicit retrieval-required decision
-- bounded query variants
-- deterministic answer policy defaults
-- route-visible run output for these stages
+- central stage model resolver
+- config-driven routing defaults for key V1 stages
+- inspectable routing output in the run payload
+- keeping stage modules free from direct model choice
 
 Excluded:
+- real model/provider execution
 - real scope inference logic
 - real retrieval orchestration logic
-- real model/provider integration
 - persistence layer
 - frontend
 
@@ -42,14 +40,12 @@ Excluded:
 - backend imports successfully
 - `/health` remains working
 - `/runs/execute` remains working
-- `query_analysis` output is meaningful and deterministic
-- `answer_policy` output is meaningful and deterministic
+- routing output is visible and deterministic in run execution results
 
 ---
 
 ## NOT IN SCOPE
 
-- real business logic
 - real scope inference
 - real retrieval orchestration
 - real context building logic
@@ -60,6 +56,4 @@ Excluded:
 
 ## NOTES
 
-This step establishes practical V1 behavior for the first two pipeline stages.
-
-Later pipeline stages remain intentionally stubbed.
+This step establishes the central runtime hook for stage-specific model routing without changing later stub stage behavior into real model execution.

@@ -36,6 +36,13 @@ class AnswerPolicy(BaseModel):
     response_style: str
 
 
+class StageModelConfig(BaseModel):
+    stage_id: str
+    provider_id: str
+    model_id: str
+    parameters: dict[str, str] = Field(default_factory=dict)
+
+
 class ScopeReference(BaseModel):
     workspace: str
     domain: str
@@ -132,6 +139,7 @@ class AnswerRun(BaseModel):
     query: str
     created_at: datetime
     answer_policy: AnswerPolicy
+    stage_model_routing: list[StageModelConfig] = Field(default_factory=list)
     query_analysis: QueryAnalysisResult
     scope_inference: ScopeInferenceResult
     retrieval_plan: RetrievalPlan
