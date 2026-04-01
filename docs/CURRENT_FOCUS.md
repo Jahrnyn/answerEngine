@@ -4,35 +4,34 @@
 
 ## CURRENT FOCUS
 
-CfHEE integration foundation for the Answer Engine backend.
+Query Analysis and Answer Policy Resolution V1 for the Answer Engine backend.
 
 Status:
-- thin client foundation implemented
-- dev-oriented CfHEE verification surface available
+- deterministic V1 stage logic implemented
+- existing pipeline execution route now exposes more meaningful early-stage outputs
 
 ---
 
 ## CURRENT GOAL
 
-Establish a thin, explicit client layer for CfHEE as an external dependency without integrating real pipeline behavior yet.
+Replace early placeholder pipeline behavior with practical deterministic V1 logic before real scope inference and retrieval are implemented.
 
 ---
 
 ## SCOPE
 
 Included:
-- config-driven CfHEE base URL handling
-- thin CfHEE client wrappers
-- health/capabilities access
-- scope helper access
-- retrieval wrapper skeleton
-- dev-oriented verification routes
+- query normalization
+- simple intent classification
+- explicit retrieval-required decision
+- bounded query variants
+- deterministic answer policy defaults
+- route-visible run output for these stages
 
 Excluded:
-- real pipeline integration
 - real scope inference logic
 - real retrieval orchestration logic
-- real model provider integration
+- real model/provider integration
 - persistence layer
 - frontend
 
@@ -42,8 +41,9 @@ Excluded:
 
 - backend imports successfully
 - `/health` remains working
-- CfHEE routes are registered
-- dependency failure is explicit when CfHEE is unavailable
+- `/runs/execute` remains working
+- `query_analysis` output is meaningful and deterministic
+- `answer_policy` output is meaningful and deterministic
 
 ---
 
@@ -60,6 +60,6 @@ Excluded:
 
 ## NOTES
 
-This step establishes the external dependency foundation for CfHEE.
+This step establishes practical V1 behavior for the first two pipeline stages.
 
-The run pipeline skeleton remains separate and intentionally stubbed.
+Later pipeline stages remain intentionally stubbed.

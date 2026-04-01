@@ -22,3 +22,4 @@
 - Introduced stage-specific model routing as a documentation concept and aligned architecture, pipeline, domain model, decisions, and project state around centralized, configuration-driven model selection.
 - Implemented Slice 1 backend pipeline skeleton with a `RunExecutor`, explicit stub stage boundaries, a dev-oriented `POST /runs/execute` route, and deterministic `AnswerRun`-like output assembly.
 - Implemented Slice 2 CfHEE integration foundation with config-driven base URL settings, a thin external client, and developer-oriented `/cfhee/*` verification routes for health, capabilities, scope helpers, and retrieval wrapper testing.
+- Implemented Slice 3 with deterministic V1 Query Analysis and Answer Policy Resolution logic, replacing early placeholders in the pipeline skeleton while keeping later stages stubbed.

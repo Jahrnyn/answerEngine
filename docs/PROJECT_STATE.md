@@ -37,7 +37,8 @@ Status: PARTIALLY IMPLEMENTED
 - Dev-oriented CfHEE verification routes exist under `/cfhee/*`
 - Local editable install is defined for the backend package
 - Run-centric pipeline execution skeleton exists
-- Explicit stub stage boundaries exist from query analysis through final response mapping
+- Practical deterministic V1 logic exists for Query Analysis and Answer Policy Resolution
+- Explicit stub stage boundaries exist from scope inference through final response mapping
 - Thin CfHEE client foundation exists
 
 ---
@@ -104,9 +105,9 @@ Includes:
 - Answer Verification
 
 Current code state:
-- structural skeleton only
-- deterministic stub outputs only
-- no real retrieval, model, or CfHEE behavior
+- Query Analysis and Answer Policy Resolution use deterministic V1 rule-based behavior
+- later stages remain structural stub outputs
+- no real retrieval, model, or CfHEE behavior inside the pipeline
 - pipeline stages are not yet wired to the CfHEE client
 
 ---
@@ -196,6 +197,8 @@ The following are not yet resolved:
 - practical latency budget targets
 - stage-specific model routing configuration
 - pipeline integration strategy for the CfHEE client
+- scope inference strategy implementation
+- retrieval orchestration implementation
 - persistence strategy for AnswerRun
 - rules for structured knowledge promotion into CfHEE
 
@@ -229,6 +232,8 @@ The following DO exist in minimal structural form:
 - dev-only pipeline execution route
 - dev-only CfHEE verification routes
 - stub `AnswerRun` execution flow
+- practical deterministic query analysis
+- practical deterministic answer policy resolution
 - thin CfHEE client foundation
 
 Any assumption that these exist is incorrect.
