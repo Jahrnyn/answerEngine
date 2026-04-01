@@ -83,7 +83,23 @@ If step 2 fails, the startup must stop.
 
 ---
 
-## 7. Developer verification routes
+## 7. Current local development model profile
+
+Current centralized local development defaults:
+
+- `query_analysis` -> rule-based first with optional `qwen2.5:1.5b` fallback intent
+- `scope_inference_ranking` -> `qwen2.5:3b`
+- `answer_generation` -> `qwen2.5:7b`
+- `answer_verification` -> `qwen2.5:3b`
+
+Notes:
+- these are development defaults, not permanent product-level model commitments
+- routing remains centralized and configuration-driven
+- the current local environment has been checked for `qwen2.5:1.5b`, `qwen2.5:3b`, and `qwen2.5:7b`
+
+---
+
+## 8. Developer verification routes
 
 The backend may expose narrow developer-oriented routes for checking local integration surfaces.
 

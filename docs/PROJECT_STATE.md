@@ -65,6 +65,11 @@ Status: PARTIALLY IMPLEMENTED
 - No broad model provider abstraction
 - Stage-specific model routing skeleton exists with config-driven defaults and inspectable run output
 - Central stage routing is consumed for answer generation
+- Current local development defaults are explicitly aligned to:
+- `query_analysis` -> rule-based first with optional `qwen2.5:1.5b` fallback intent
+- `scope_inference_ranking` -> `qwen2.5:3b`
+- `answer_generation` -> `qwen2.5:7b`
+- `answer_verification` -> `qwen2.5:3b`
 - No user-visible streaming logic
 
 ---
@@ -257,6 +262,8 @@ The following have been verified against the current live local CfHEE setup:
 - live pipeline execution has been re-checked successfully for at least one real query path (`bechtle crm`)
 - live context assembly has been re-checked successfully for at least one real query path (`bechtle crm`)
 - live answer generation has been re-checked successfully for at least one real query path (`bechtle crm`)
+- the local Ollama runtime has been re-checked and currently includes `qwen2.5:1.5b`, `qwen2.5:3b`, and `qwen2.5:7b`
+- centralized stage routing has been re-checked and currently resolves `answer_generation` to `qwen2.5:7b`
 
 Any assumption that these exist is incorrect.
 

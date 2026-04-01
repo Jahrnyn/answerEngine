@@ -37,9 +37,21 @@ def get_settings() -> BackendSettings:
         "ANSWER_ENGINE_OLLAMA_BASE_URL",
         getenv("OLLAMA_BASE_URL", BackendSettings.ollama_base_url),
     )
+    query_analysis_fallback_model_id = getenv(
+        "ANSWER_ENGINE_QUERY_ANALYSIS_FALLBACK_MODEL",
+        "qwen2.5:1.5b",
+    )
+    scope_inference_ranking_model_id = getenv(
+        "ANSWER_ENGINE_SCOPE_INFERENCE_RANKING_MODEL",
+        "qwen2.5:3b",
+    )
     answer_generation_model_id = getenv(
         "ANSWER_ENGINE_ANSWER_GENERATION_MODEL",
-        "strongest_available_default",
+        "qwen2.5:7b",
+    )
+    answer_verification_model_id = getenv(
+        "ANSWER_ENGINE_ANSWER_VERIFICATION_MODEL",
+        "qwen2.5:3b",
     )
     answer_generation_temperature = getenv("ANSWER_ENGINE_ANSWER_GENERATION_TEMPERATURE", "0")
     answer_generation_max_tokens = getenv("ANSWER_ENGINE_ANSWER_GENERATION_MAX_TOKENS", "256")
@@ -49,12 +61,17 @@ def get_settings() -> BackendSettings:
             stage_id="query_analysis",
             provider_id="rule_based",
             model_id="rule_based_default",
-            parameters={"routing_mode": "rule_based"},
+            parameters={
+                "routing_mode": "rule_based",
+                "fallback_provider_id": "ollama",
+                "fallback_model_id": query_analysis_fallback_model_id,
+                "fallback_capability_tier": "small",
+            },
         ),
         "scope_inference_ranking": StageRoutingDefault(
             stage_id="scope_inference_ranking",
-            provider_id="runtime",
-            model_id="medium_capability_default",
+            provider_id="ollama",
+            model_id=scope_inference_ranking_model_id,
             parameters={"routing_mode": "model", "capability_tier": "medium"},
         ),
         "answer_generation": StageRoutingDefault(
@@ -70,8 +87,8 @@ def get_settings() -> BackendSettings:
         ),
         "answer_verification": StageRoutingDefault(
             stage_id="answer_verification",
-            provider_id="runtime",
-            model_id="small_or_medium_default",
+            provider_id="ollama",
+            model_id=answer_verification_model_id,
             parameters={"routing_mode": "model", "capability_tier": "small_or_medium"},
         ),
     }

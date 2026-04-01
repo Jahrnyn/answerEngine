@@ -67,6 +67,10 @@ Understand the user query and determine execution requirements.
 Model expectation:
 - may be rule-based or use a smaller model
 
+Current local development default:
+- rule-based first
+- optional small-model fallback intent: `qwen2.5:1.5b`
+
 #### Outputs
 QueryAnalysisResult:
 
@@ -165,6 +169,9 @@ Model expectation:
 
 Current backend note:
 - the current backend slice may use deterministic interim ranking preparation before model-assisted ranking is implemented
+
+Current local development default when model routing is used:
+- `qwen2.5:3b`
 
 V1 execution limit:
 - maximum scopes passed into LLM ranking: 6
@@ -342,7 +349,10 @@ Generate response using model.
 - may support runtime/provider streaming internally
 
 Model expectation:
-- uses the strongest available model in the current runtime
+- uses the configured answer-generation model for the current runtime
+
+Current local development default:
+- `qwen2.5:7b`
 
 #### Output
 AnswerResult:
@@ -396,6 +406,9 @@ Verification runs only after a complete candidate answer exists.
 
 Model expectation:
 - uses a smaller or medium-capability model when model assistance is needed
+
+Current local development default when model routing is used:
+- `qwen2.5:3b`
 
 #### Output
 VerificationResult:

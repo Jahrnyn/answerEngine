@@ -322,7 +322,13 @@ Typical routing intent:
 - ranking and verification stages may use smaller or medium-capability models
 - answer generation uses the strongest available model in the current runtime
 
-This is a routing concept, not a claim of implemented runtime behavior.
+Current local development defaults:
+- `query_analysis` -> rule-based first with optional `qwen2.5:1.5b` fallback intent
+- `scope_inference_ranking` -> `qwen2.5:3b`
+- `answer_generation` -> `qwen2.5:7b`
+- `answer_verification` -> `qwen2.5:3b`
+
+These are current centralized development defaults, not permanent architecture rules.
 
 ---
 
