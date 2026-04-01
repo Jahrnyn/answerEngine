@@ -84,12 +84,16 @@ class RetrievedChunk(BaseModel):
 
 class RetrievalRoundResult(BaseModel):
     scope: ScopeReference
+    status: str = "ok"
+    result_count: int = 0
     chunks: list[RetrievedChunk]
 
 
 class RetrievalResult(BaseModel):
+    status: str = "ok"
     results_by_round: list[RetrievalRoundResult]
     aggregated_results: list[RetrievedChunk]
+    failure_reason: str | None = None
 
 
 class SourceReference(BaseModel):

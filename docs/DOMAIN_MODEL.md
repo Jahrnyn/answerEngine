@@ -217,8 +217,13 @@ RetrievalRound:
 ### 4.9 RetrievalResult
 
 RetrievalResult:
+- status: "ok" | "no_evidence" | "no_retrieval"
 - results_by_round: list[RetrievalRoundResult]
 - aggregated_results: list[RetrievedChunk]
+- failure_reason: string (optional)
+
+Notes:
+- V1 may return explicit empty or skipped retrieval states instead of pretending successful evidence retrieval
 
 ---
 
@@ -226,6 +231,8 @@ RetrievalResult:
 
 RetrievalRoundResult:
 - scope: ScopeReference
+- status: "ok" | "empty"
+- result_count: int
 - chunks: list[RetrievedChunk]
 
 ---

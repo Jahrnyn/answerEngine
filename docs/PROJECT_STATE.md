@@ -39,7 +39,8 @@ Status: PARTIALLY IMPLEMENTED
 - Run-centric pipeline execution skeleton exists
 - Practical deterministic V1 logic exists for Query Analysis and Answer Policy Resolution
 - Practical bounded V1 scope inference exists with deterministic filtering and CfHEE-backed validation
-- Explicit stub stage boundaries exist from retrieval planning through final response mapping
+- Practical bounded V1 retrieval planning and CfHEE-backed retrieval execution exist
+- Explicit stub stage boundaries exist from context assembly through final response mapping
 - Thin CfHEE client foundation exists
 - Central stage model resolver skeleton exists
 
@@ -83,7 +84,7 @@ Status: PARTIALLY IMPLEMENTED
 - Scope helper access exists
 - Retrieval wrapper skeleton exists
 - Dev-oriented backend verification routes exist
-- Pipeline integration exists for scope inference availability and validation probes
+- Pipeline integration exists for scope inference, retrieval planning, and retrieval execution
 - No knowledge promotion behavior
 
 ---
@@ -109,9 +110,10 @@ Includes:
 Current code state:
 - Query Analysis and Answer Policy Resolution use deterministic V1 rule-based behavior
 - Scope Inference uses bounded deterministic candidate filtering and CfHEE-backed retrieval validation
-- retrieval planning and later stages remain structural stub outputs
+- Retrieval Planning uses bounded validated-scope planning
+- Retrieval Execution uses CfHEE-backed execution with explicit per-round and aggregated results
 - no real model behavior inside the pipeline
-- later retrieval and answer stages are not yet wired to real CfHEE retrieval behavior
+- later context assembly and answer stages remain structural stub outputs
 
 ---
 
@@ -199,7 +201,6 @@ The following are not yet resolved:
 - bounded scope inference thresholds
 - regeneration conditions in verification stage
 - practical latency budget targets
-- pipeline integration strategy for the CfHEE client
 - retrieval orchestration implementation
 - persistence strategy for AnswerRun
 - rules for structured knowledge promotion into CfHEE
@@ -222,12 +223,12 @@ No production-ready behavior exists yet.
 
 - no answering API endpoints
 - no production-ready answering API endpoints
-- no full retrieval planning and retrieval execution integration
+- no context-grounded answer generation pipeline yet
 - no real model inference
 - UI interaction
 - trace visualization
 - implemented chat/session capability
-- pipeline stages beyond scope inference using real CfHEE data
+- pipeline stages beyond retrieval execution using real CfHEE data
 
 The following DO exist in minimal structural form:
 - `/health`
@@ -239,6 +240,7 @@ The following DO exist in minimal structural form:
 - thin CfHEE client foundation
 - stage model resolver skeleton with deterministic routing defaults
 - bounded scope inference using CfHEE scope visibility and validation probes
+- bounded retrieval planning and CfHEE-backed retrieval execution
 
 Any assumption that these exist is incorrect.
 

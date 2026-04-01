@@ -259,6 +259,7 @@ RetrievalPlan:
 #### Notes
 - V1 planning must respect the bounded scope set from scope inference
 - V1 retrieval planning must not silently broaden scope beyond validated or explicit fallback scope
+- the current backend slice plans one validated primary round and may add one validated secondary round when bounded policy allows it
 
 ---
 
@@ -288,6 +289,7 @@ RetrievalResult:
 #### Notes
 - Retrieval MUST be deterministic per round
 - No silent fallback allowed
+- the current backend slice returns explicit `no_retrieval` or `no_evidence` style results when retrieval does not proceed or returns no chunks
 
 ---
 

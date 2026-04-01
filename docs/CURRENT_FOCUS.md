@@ -4,27 +4,27 @@
 
 ## CURRENT FOCUS
 
-Retrieval Planning and Retrieval Execution V1 integration for the Answer Engine backend.
+Context Assembly V1 for the Answer Engine backend.
 
 Status:
-- scope inference now produces bounded, traceable scope results
-- the next backend step is to replace retrieval-stage placeholders with practical CfHEE-backed behavior
+- the first half of the pipeline now produces bounded, traceable retrieval outputs
+- the next backend step is to turn retrieval results into a practical structured context pack
 
 ---
 
 ## CURRENT GOAL
 
-Turn validated scope inference output into meaningful retrieval plans and non-stub retrieval execution while keeping later answer stages skeletal.
+Turn real retrieval results into a bounded, inspectable context pack while keeping answer generation and verification skeletal.
 
 ---
 
 ## SCOPE
 
 Included:
-- using validated scopes from scope inference
-- practical retrieval planning rules
-- CfHEE-backed retrieval execution
-- deterministic and inspectable retrieval outputs
+- practical chunk selection
+- deterministic source mapping
+- bounded structured context assembly
+- inspectable context-pack output
 
 Excluded:
 - answer generation implementation
@@ -39,8 +39,8 @@ Excluded:
 - backend imports successfully
 - `/health` remains working
 - `/runs/execute` remains working
-- retrieval stages produce meaningful non-stub outputs
-- retrieval behavior remains deterministic and traceable
+- context assembly produces meaningful non-stub output
+- context-pack behavior remains deterministic and traceable
 
 ---
 
@@ -54,4 +54,4 @@ Excluded:
 
 ## NOTES
 
-This step should convert the next two pipeline stages from structural placeholders into a practical bounded V1 retrieval path.
+This step should convert the next pipeline stage from a structural placeholder into a practical bounded V1 context-building path.

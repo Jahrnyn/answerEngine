@@ -15,7 +15,7 @@ class StageRoutingDefault:
 
 @dataclass(frozen=True)
 class BackendSettings:
-    cfhee_base_url: str = "http://127.0.0.1:8770"
+    cfhee_base_url: str = "http://127.0.0.1:4210"
     cfhee_timeout_seconds: float = 5.0
     stage_routing_defaults: dict[str, StageRoutingDefault] | None = None
 
