@@ -16,6 +16,12 @@ The system currently consists of:
 - documentation framework
 - minimal backend application scaffold
 
+The documented V1 direction is now:
+- run-centric, not chat-centric
+- centered on `AnswerRun` as the primary runtime unit
+- focused on one question -> one grounded answer
+- not focused on long continuous conversation handling
+
 ---
 
 ## 2. Implemented Components
@@ -36,7 +42,7 @@ Status: NOT IMPLEMENTED
 
 - No Angular project exists
 - No UI components exist
-- No chat interface is implemented
+- No question/answer surface is implemented
 - No trace/debug UI exists
 
 ---
@@ -53,9 +59,9 @@ Status: NOT IMPLEMENTED
 ### 2.4 Storage
 Status: NOT IMPLEMENTED
 
-- No session persistence
-- No message storage
-- No AnswerRun storage
+- No AnswerRun persistence
+- No raw interaction persistence
+- No optional conversation/session persistence
 
 ---
 
@@ -65,7 +71,7 @@ Status: NOT IMPLEMENTED
 - No API client
 - No retrieval calls
 - No scope fetching
-- No memory persistence
+- No knowledge promotion behavior
 
 ---
 
@@ -79,12 +85,14 @@ Defined in:
 
 Includes:
 - Query Analysis
+- Answer Policy Resolution
 - Scope Inference (Hybrid)
 - Retrieval Planning
 - Multi-stage Retrieval
 - Context Assembly
 - Answer Generation
-- Answer Verification
+- Evidence Verification
+- Response Evaluation
 
 ---
 
@@ -93,12 +101,14 @@ Defined in:
 - docs/DOMAIN_MODEL.md
 
 Includes:
-- ChatSession
-- ChatMessage
 - AnswerRun
+- AnswerPolicy
+- EvidenceVerificationResult
+- ResponseEvaluationResult
+- ChatSession (optional)
+- ChatMessage (optional)
 - Retrieval structures
 - ContextPack
-- VerificationResult
 
 ---
 
@@ -158,9 +168,9 @@ The following are not yet resolved:
 - exact prompt structure
 - token budgeting strategy
 - optimal chunk selection strategy
-- regeneration conditions in verification stage
+- regeneration conditions in verification stages
 - persistence strategy for AnswerRun
-- memory summarization strategy for CfHEE
+- rules for structured knowledge promotion into CfHEE
 
 ---
 
@@ -181,10 +191,12 @@ No production-ready behavior exists yet.
 - no answering API endpoints
 - health endpoint only
 - functioning pipeline execution
+- AnswerRun execution
 - retrieval integration
 - model inference
 - UI interaction
 - trace visualization
+- implemented chat/session capability
 
 Any assumption that these exist is incorrect.
 

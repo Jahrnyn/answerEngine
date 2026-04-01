@@ -72,7 +72,7 @@ Reason: local-first execution now, flexible model integration later.
 ---
 
 ## ADR-012
-CfHEE is used as the primary knowledge and long-term memory layer.
+CfHEE is used as the primary knowledge and long-term structured knowledge layer.
 Reason: separation of concerns and reuse of existing scoped retrieval infrastructure.
 
 ---
@@ -84,8 +84,8 @@ Reason: intermediate pipeline state is transient and should not pollute long-ter
 ---
 
 ## ADR-014
-Conversation memory may be partially persisted to CfHEE, but only in structured or summarized form.
-Reason: prevent noise accumulation while enabling long-term knowledge reuse.
+Raw interaction persistence stays in the Answer Engine. Only structured or reusable long-term knowledge may be promoted to CfHEE.
+Reason: preserve the module boundary, avoid raw conversation dump behavior in CfHEE, and keep long-term knowledge curation explicit.
 
 ---
 
@@ -216,3 +216,39 @@ Reason: the Answer Engine should use a stable, non-casual local integration targ
 ## ADR-036
 The Answer Engine `dev-up.ps1` script must fail fast if CfHEE is not reachable or does not expose the minimum required capabilities.
 Reason: partial startup would create a misleading local development state and complicate debugging.
+
+---
+
+## ADR-037
+V1 is run-centric, not chat-centric.
+Reason: the primary V1 problem is producing one grounded answer for one question through an explicit pipeline, not managing long continuous conversation behavior.
+
+---
+
+## ADR-038
+`AnswerRun` is the primary runtime unit.
+Reason: the pipeline must produce a single traceable execution record that binds together analysis, retrieval, context, generation, and verification outputs.
+
+---
+
+## ADR-039
+Verification is split into evidence verification and response evaluation.
+Reason: grounding against evidence and judging whether the response satisfactorily answers the question are distinct checks and should remain separately traceable.
+
+---
+
+## ADR-040
+Raw interaction persistence stays in the Answer Engine.
+Reason: local interaction history and trace-linked run records belong to the execution layer, not the external knowledge system.
+
+---
+
+## ADR-041
+Only structured and reusable long-term knowledge may be promoted into CfHEE.
+Reason: CfHEE remains the external knowledge and memory dependency and must not absorb raw conversation dump behavior.
+
+---
+
+## ADR-042
+V1 frontend UX is a main question/answer surface with an optional inspect panel.
+Reason: the initial user experience should stay aligned with run-centric answering while still exposing trace, sources, context, and verification details when needed.

@@ -1,4 +1,4 @@
-# DOMAIN_MODEL — Answer Engine
+# DOMAIN_MODEL - Answer Engine
 
 ---
 
@@ -30,7 +30,8 @@ Each pipeline stage produces and consumes defined models.
 
 ### 2.4 Separation of Concerns
 Different data types must not be merged:
-- session data
+- run data
+- optional conversation data
 - retrieval data
 - context data
 - model output
@@ -41,9 +42,34 @@ Different data types must not be merged:
 
 ---
 
-### 3.1 ChatSession
+### 3.1 AnswerRun
 
-Represents a conversation.
+Represents the primary runtime unit in V1.
+
+AnswerRun:
+- id: string
+- query: string
+- created_at: datetime
+- answer_policy: AnswerPolicy
+
+- query_analysis: QueryAnalysisResult
+- scope_inference: ScopeInferenceResult
+- retrieval_plan: RetrievalPlan
+- retrieval_result: RetrievalResult
+- context_pack: ContextPack
+- answer_result: AnswerResult
+- evidence_verification_result: EvidenceVerificationResult
+- response_evaluation_result: ResponseEvaluationResult
+
+- conversation_ref: ConversationRef (optional)
+- timings: TimingInfo
+- errors: list (optional)
+
+---
+
+### 3.2 ChatSession
+
+Optional lightweight grouping for multiple runs or interactions.
 
 ChatSession:
 - id: string
@@ -54,9 +80,9 @@ ChatSession:
 
 ---
 
-### 3.2 ChatMessage
+### 3.3 ChatMessage
 
-Represents a single message.
+Optional raw interaction record stored by the Answer Engine.
 
 ChatMessage:
 - id: string
@@ -65,28 +91,6 @@ ChatMessage:
 - content: string
 - created_at: datetime
 - metadata: dict (optional)
-
----
-
-### 3.3 AnswerRun
-
-Represents a full pipeline execution.
-
-AnswerRun:
-- id: string
-- session_id: string
-- user_message_id: string
-
-- query_analysis: QueryAnalysisResult
-- scope_inference: ScopeInferenceResult
-- retrieval_plan: RetrievalPlan
-- retrieval_result: RetrievalResult
-- context_pack: ContextPack
-- answer_result: AnswerResult
-- verification_result: VerificationResult
-
-- timings: TimingInfo
-- errors: list (optional)
 
 ---
 
@@ -127,7 +131,35 @@ ScopeReference:
 
 ---
 
-### 4.4 RetrievalPlan
+### 4.4 AnswerPolicy
+
+Internal backend/runtime control object resolved for a run.
+
+AnswerPolicy:
+- retrieval_required: bool
+- max_retrieval_rounds: int
+- default_top_k: int
+- verification_profile: string
+- response_style: string
+
+Notes:
+- internal to the backend/runtime
+- not a user-facing UI selection
+
+---
+
+### 4.5 ConversationRef
+
+Links an `AnswerRun` to optional conversation persistence structures.
+
+ConversationRef:
+- session_id: string (optional)
+- user_message_id: string (optional)
+- assistant_message_id: string (optional)
+
+---
+
+### 4.6 RetrievalPlan
 
 RetrievalPlan:
 - rounds: list[RetrievalRound]
@@ -135,7 +167,7 @@ RetrievalPlan:
 
 ---
 
-### 4.5 RetrievalRound
+### 4.7 RetrievalRound
 
 RetrievalRound:
 - scope: ScopeReference
@@ -144,7 +176,7 @@ RetrievalRound:
 
 ---
 
-### 4.6 RetrievalResult
+### 4.8 RetrievalResult
 
 RetrievalResult:
 - results_by_round: list[RetrievalRoundResult]
@@ -152,7 +184,7 @@ RetrievalResult:
 
 ---
 
-### 4.7 RetrievalRoundResult
+### 4.9 RetrievalRoundResult
 
 RetrievalRoundResult:
 - scope: ScopeReference
@@ -160,7 +192,7 @@ RetrievalRoundResult:
 
 ---
 
-### 4.8 RetrievedChunk
+### 4.10 RetrievedChunk
 
 Represents a unit returned from CfHEE.
 
@@ -173,7 +205,7 @@ RetrievedChunk:
 
 ---
 
-### 4.9 ContextPack
+### 4.11 ContextPack
 
 ContextPack:
 - selected_chunks: list[RetrievedChunk]
@@ -183,7 +215,7 @@ ContextPack:
 
 ---
 
-### 4.10 SourceReference
+### 4.12 SourceReference
 
 SourceReference:
 - document_id: string
@@ -192,7 +224,7 @@ SourceReference:
 
 ---
 
-### 4.11 AnswerResult
+### 4.13 AnswerResult
 
 AnswerResult:
 - answer_text: string
@@ -201,7 +233,7 @@ AnswerResult:
 
 ---
 
-### 4.12 TokenUsage
+### 4.14 TokenUsage
 
 TokenUsage:
 - prompt_tokens: int
@@ -210,18 +242,27 @@ TokenUsage:
 
 ---
 
-### 4.13 VerificationResult
+### 4.15 EvidenceVerificationResult
 
-VerificationResult:
+EvidenceVerificationResult:
 - grounded: bool
-- coverage_ok: bool
 - uncertainty_flags: list[string]
 - scope_consistency_ok: bool
 - requires_regeneration: bool
 
 ---
 
-### 4.14 TimingInfo
+### 4.16 ResponseEvaluationResult
+
+ResponseEvaluationResult:
+- coverage_ok: bool
+- response_quality_ok: bool
+- limitations: list[string]
+- requires_regeneration: bool
+
+---
+
+### 4.17 TimingInfo
 
 TimingInfo:
 - total_time_ms: int
@@ -262,16 +303,24 @@ Requirements:
 Stored in CfHEE:
 - documents
 - chunks
-- optional summarized conversations
+- promoted structured knowledge only
 
 ---
 
 ### 7.2 Answer Engine Storage
 
 Stored locally:
-- ChatSession
-- ChatMessage
 - AnswerRun (optional persistence)
+- ChatSession (optional)
+- ChatMessage (optional)
+
+Conversation persistence:
+- raw interaction records owned by the Answer Engine
+- useful for local history and trace linkage
+
+Knowledge promotion:
+- only structured, reusable long-term knowledge may be sent to CfHEE
+- raw conversation dumps do not belong in CfHEE
 
 ---
 

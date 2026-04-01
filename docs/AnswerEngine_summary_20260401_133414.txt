@@ -1,0 +1,2883 @@
+# ANSWER_PIPELINE - Answer Engine
+
+---
+
+## 1. Purpose
+
+This document defines the exact execution pipeline of the Answer Engine.
+
+It is the authoritative source for:
+- how queries are processed
+- how scope is inferred
+- how retrieval is executed
+- how context is built
+- how answers are generated and verified
+
+Any change in runtime behavior MUST be reflected here.
+
+---
+
+## 2. Pipeline Overview
+User Query
+↓
+Query Analysis
+↓
+Answer Policy Resolution
+↓
+Scope Inference (Hybrid)
+↓
+Retrieval Planning
+↓
+Retrieval Execution (CfHEE)
+↓
+Context Assembly
+↓
+Answer Generation
+↓
+Evidence Verification
+↓
+Response Evaluation
+↓
+Final Response
+
+Each stage:
+- receives structured input
+- produces structured output
+- must be traceable
+
+---
+
+## 3. Stage Definitions
+
+---
+
+### 3.1 Query Analysis Stage
+
+#### Purpose
+Understand the user query and determine execution requirements.
+
+#### Inputs
+- user_query (string)
+- conversation_context (optional)
+
+#### Responsibilities
+- normalize query
+- detect query intent
+- determine if retrieval is required
+- optionally generate query variants
+
+#### Outputs
+QueryAnalysisResult:
+
+- normalized_query
+- intent_type
+- requires_retrieval (bool)
+- query_variants (optional list)
+
+#### Notes
+- This stage MUST NOT perform retrieval
+- This stage MUST NOT modify scope
+
+---
+
+### 3.2 Answer Policy Resolution Stage
+
+#### Purpose
+Resolve backend/runtime controls for the current run.
+
+#### Inputs
+- query_analysis_result
+- system configuration
+- route defaults (optional)
+
+#### Responsibilities
+- decide runtime answering constraints for the run
+- set retrieval limits and defaults
+- set verification strictness
+- remain internal to the backend/runtime
+
+#### Outputs
+AnswerPolicy:
+
+- retrieval_required: bool
+- max_retrieval_rounds: int
+- default_top_k: int
+- verification_profile: string
+- response_style: string
+
+#### Notes
+- `AnswerPolicy` is NOT a user-facing UI selection
+- `AnswerPolicy` must be explicit in trace
+- `AnswerPolicy` does NOT replace pipeline stages
+
+---
+
+### 3.3 Scope Inference Stage (Hybrid)
+
+#### Purpose
+Determine relevant CfHEE scope(s) without user input.
+
+---
+
+#### Step 1 - Heuristic Filtering
+
+Inputs:
+- normalized_query
+- conversation_context
+- available_scopes (from CfHEE)
+
+Logic:
+- keyword matching
+- scope metadata hints
+- lightweight continuity hints when conversation context exists
+
+Output:
+- candidate_scopes (list)
+
+---
+
+#### Step 2 - LLM-assisted Ranking
+
+Inputs:
+- normalized_query
+- candidate_scopes
+
+Logic:
+- evaluate semantic relevance
+- rank scopes
+- assign confidence
+
+Output:
+RankedScopes:
+
+- primary_scope
+- secondary_scopes (optional)
+- confidence_scores
+
+---
+
+#### Step 3 - Retrieval Validation
+
+Inputs:
+- top scopes
+
+Logic:
+- perform lightweight retrieval probe
+- validate actual relevance
+
+Output:
+ValidatedScopes:
+
+- confirmed_primary_scope
+- confirmed_secondary_scopes
+- validation_scores
+
+---
+
+#### Notes
+- Scope inference MUST NOT rely on LLM alone
+- Retrieval validation is mandatory for reliability
+
+---
+
+### 3.4 Retrieval Planning Stage
+
+#### Purpose
+Define how retrieval will be executed.
+
+#### Inputs
+- validated_scopes
+- query_analysis_result
+- answer_policy
+
+#### Responsibilities
+- decide number of retrieval rounds
+- assign scopes per round
+- define top_k values
+- define fallback strategy
+
+#### Output
+RetrievalPlan:
+
+- rounds:
+- - scope
+- - top_k
+- - strategy_type
+- fallback_rules
+
+---
+
+### 3.5 Retrieval Execution Stage (CfHEE)
+
+#### Purpose
+Execute retrieval using CfHEE API.
+
+#### Inputs
+- retrieval_plan
+- normalized_query
+
+#### Execution
+- perform retrieval per round
+- collect results
+- preserve metadata
+
+#### Output
+RetrievalResult:
+
+- results_by_round:
+- - scope
+- - chunks
+- - scores
+- aggregated_results
+
+#### Notes
+- Retrieval MUST be deterministic per round
+- No silent fallback allowed
+
+---
+
+### 3.6 Context Assembly Stage
+
+#### Purpose
+Construct the final context for the model.
+
+#### Inputs
+- retrieval_result
+- token_budget
+- answer_policy
+
+#### Responsibilities
+- deduplicate chunks
+- rank by relevance
+- filter low-value chunks
+- enforce token limits
+- structure context
+
+#### Output
+ContextPack:
+
+- selected_chunks
+- source_mapping
+- structured_context
+- token_estimate
+
+#### Notes
+- Context must remain interpretable
+- Chunk selection must be traceable
+
+---
+
+### 3.7 Answer Generation Stage
+
+#### Purpose
+Generate response using model.
+
+#### Inputs
+- user_query
+- context_pack
+- answer_policy
+- system_prompt
+
+#### Execution
+- build prompt
+- call model provider
+- support streaming
+
+#### Output
+AnswerResult:
+
+- answer_text
+- token_usage
+- model_metadata
+
+#### Notes
+- Model provider must be abstracted
+- Prompt construction must be traceable
+
+---
+
+### 3.8 Evidence Verification Stage
+
+#### Purpose
+Ensure the generated answer is supported by retrieved evidence.
+
+#### Inputs
+- answer_result
+- context_pack
+- validated_scopes
+
+#### Checks
+
+##### 1. Grounding Check
+- verify claims exist in context
+
+##### 2. Uncertainty Check
+- detect unsupported claims
+
+##### 3. Scope Consistency Check
+- ensure no cross-scope contamination
+
+#### Output
+EvidenceVerificationResult:
+
+- grounded (bool)
+- uncertainty_flags
+- scope_consistency_ok (bool)
+- requires_regeneration (bool)
+
+---
+
+### 3.9 Response Evaluation Stage
+
+#### Purpose
+Evaluate whether the evidence-grounded answer actually satisfies the question.
+
+#### Inputs
+- user_query
+- answer_result
+- evidence_verification_result
+- answer_policy
+
+#### Checks
+
+##### 1. Coverage Check
+- verify question coverage
+
+##### 2. Response Quality Check
+- verify the response follows the intended answer shape for the run
+
+##### 3. Final Handling Decision
+- decide whether to keep the answer, mark limitations, or regenerate
+
+#### Output
+ResponseEvaluationResult:
+
+- coverage_ok (bool)
+- response_quality_ok (bool)
+- limitations: list[string]
+- requires_regeneration (bool)
+
+#### Optional Actions
+- regenerate answer
+- downgrade confidence
+- inject uncertainty message
+
+---
+
+### 3.10 Final Response Stage
+
+#### Purpose
+Prepare response for UI.
+
+#### Output
+FinalResponse:
+
+- answer_text
+- sources
+- inferred_scopes
+- verification_summary
+- trace_reference
+
+---
+
+## 4. Trace Model
+
+Each pipeline execution produces a trace.
+AnswerRun:
+
+- id
+- query
+- query_analysis
+- answer_policy
+- scope_inference
+- retrieval_plan
+- retrieval_result
+- context_pack
+- answer_result
+- evidence_verification_result
+- response_evaluation_result
+- timings
+- errors
+
+Trace must be:
+- complete
+- structured
+- accessible to UI
+
+---
+
+## 5. Execution Rules
+
+### 5.1 Determinism
+Each stage must produce reproducible outputs given same inputs.
+
+---
+
+### 5.2 No Hidden State
+All important decisions must be explicit and logged.
+
+---
+
+### 5.3 No Silent Fallback
+All fallback behavior must be visible in trace.
+
+---
+
+### 5.4 Fail Transparently
+Failures must be surfaced, not hidden.
+
+---
+
+## 6. Failure Handling
+
+Examples:
+
+- no relevant scope -> explicit response
+- empty retrieval -> return "no evidence"
+- low confidence -> mark answer as uncertain
+
+---
+
+## 7. Extensibility Rules
+
+New features must:
+- map to an existing stage OR
+- introduce a new explicit stage
+
+No implicit logic insertion allowed.
+
+---
+
+## 8. Summary
+
+The Answer Engine pipeline is:
+
+- explicit
+- multi-stage
+- traceable
+- grounded
+
+It transforms user queries into validated answers through controlled execution, not emergent agent behavior.
+# ARCHITECTURE - Answer Engine
+
+---
+
+## 1. Overview
+
+The Answer Engine is a locally runnable, developer-controlled answering runtime built on top of CfHEE.
+
+It is NOT:
+- a generic chatbot
+- a copilot system
+- an autonomous agent framework
+
+It IS:
+- a structured answering system
+- a pipeline-driven execution engine
+- a high-trust, inspectable answer generator
+
+The system transforms user queries into grounded answers through a multi-stage pipeline involving:
+- query analysis
+- scope inference
+- retrieval
+- context construction
+- reasoning
+- verification
+
+V1 is run-centric, not chat-centric:
+- the primary runtime unit is `AnswerRun`
+- the primary V1 flow is one question -> one grounded answer
+- long continuous conversation handling is not a primary V1 capability
+
+---
+
+## 2. System Positioning
+
+### 2.1 Relationship to CfHEE
+
+CfHEE provides:
+- knowledge storage (documents, chunks)
+- scoped retrieval
+- long-term structured knowledge persistence
+
+Answer Engine provides:
+- run execution and interaction persistence
+- execution pipeline
+- reasoning and answer generation
+- traceability and inspection
+
+---
+
+### 2.2 Layered Model
+[ User Interface (Angular) ]
+↓
+[ Answer Engine (FastAPI) ]
+↓
+[ CfHEE (Knowledge + Memory Layer) ]
+↓
+[ Storage + Vector DB ]
+
+---
+
+## 3. Core Architectural Principles
+
+### 3.1 Pipeline over Agents
+
+The system is explicitly structured as a deterministic pipeline.
+
+LLMs may be used within stages, but:
+- orchestration is NOT delegated to agents
+- each stage has a defined responsibility
+- behavior must remain traceable and debuggable
+
+---
+
+### 3.2 Hybrid Scope Inference
+
+The system automatically determines relevant scope(s).
+
+This is implemented as a hybrid approach:
+- heuristic filtering
+- LLM-assisted ranking
+- retrieval-based validation
+
+The user does NOT select scope manually.
+
+---
+
+### 3.3 Multi-Stage Retrieval
+
+Retrieval is not a single step.
+
+The system may:
+- query multiple scopes
+- perform multiple rounds
+- compare results
+
+Retrieval is treated as an iterative process, not a one-shot call.
+
+---
+
+### 3.4 Grounded Answering
+
+Answers must be:
+- based on retrieved context
+- traceable to sources
+- constrained when confidence is low
+
+The system must prefer:
+- partial but correct answers
+over:
+- complete but hallucinated answers
+
+---
+
+### 3.5 Inspectability as a First-Class Feature
+
+Every answer must be inspectable.
+
+The system exposes:
+- inferred scopes
+- retrieval results
+- selected chunks
+- context pack
+- model inputs (optional)
+- verification outcomes
+
+---
+
+### 3.6 Memory Separation
+
+The system distinguishes:
+
+- Domain memory -> CfHEE
+- Raw interaction persistence -> Answer Engine
+- Long-term structured knowledge promotion -> CfHEE
+- Working memory -> Answer Engine (non-persistent)
+
+Raw question/answer interactions remain the responsibility of the Answer Engine.
+Only long-term valuable structured knowledge may be promoted into CfHEE.
+
+---
+
+## 4. High-Level Execution Flow
+User Query
+↓
+Query Analysis
+↓
+Answer Policy Resolution
+↓
+Scope Inference
+↓
+Retrieval Planning
+↓
+CfHEE Retrieval (multi-round)
+↓
+Context Assembly
+↓
+Answer Generation
+↓
+Evidence Verification
+↓
+Response Evaluation
+↓
+Final Response
+
+Each stage produces structured outputs that can be inspected.
+
+---
+
+## 5. Backend Architecture
+
+### 5.1 Technology
+
+- Python
+- FastAPI
+- modular service structure
+- local-first execution
+
+---
+
+### 5.2 Core Components
+
+#### Run Layer
+- manages `AnswerRun` execution records
+- stores raw interaction history when persistence is enabled
+- keeps optional lightweight links to conversation structures
+
+#### Query Analysis Service
+- intent detection
+- query normalization
+- retrieval requirement decision
+
+#### Answer Policy Resolver
+- resolves backend/runtime answering controls
+- sets retrieval and verification defaults
+- is internal, not user-facing
+
+#### Scope Inference Service
+- candidate scope selection
+- ranking and confidence scoring
+- validation via retrieval
+
+#### Retrieval Planner
+- decides retrieval strategy
+- controls number of rounds
+- selects scopes and parameters
+
+#### CfHEE Client
+- communicates with CfHEE API
+- performs scoped retrieval
+- does not own raw interaction persistence
+
+#### Context Builder
+- selects relevant chunks
+- deduplicates
+- enforces token limits
+- builds structured context pack
+
+#### Model Provider Adapter
+- abstracts LLM providers
+- supports Ollama (default)
+- allows future providers
+
+#### Answer Generator
+- executes model calls
+- supports streaming
+- attaches metadata
+
+#### Answer Verifier
+- performs evidence verification
+- performs response evaluation
+- may trigger re-run or adjustment
+
+#### Trace Service
+- records full execution trace
+- exposes pipeline visibility
+
+---
+
+## 6. Frontend Architecture
+
+### 6.1 Technology
+
+- Angular
+- standalone components
+- modular UI structure
+
+---
+
+### 6.2 Layout Model
+
+V1 layout:
+
+MAIN SURFACE:
+- question input
+- grounded answer output
+
+OPTIONAL INSPECT / SIDE PANEL:
+- sources panel
+- context viewer
+- trace/debug panel
+- verification details
+
+---
+
+### 6.3 Key UI Concepts
+
+- the main question/answer surface is primary in V1
+- trace is always accessible when inspection is needed
+- answers are inspectable
+- developer mode exposes deeper details
+
+---
+
+## 7. Model Integration
+
+### 7.1 Default
+
+- Ollama
+- local models (e.g. 7B class)
+
+---
+
+### 7.2 Abstraction
+
+Model providers must be replaceable.
+
+The system must support:
+- synchronous generation
+- streaming generation
+- model metadata access
+
+---
+
+## 8. Data Flow Philosophy
+
+The system operates on structured intermediate data.
+
+Each stage produces:
+- explicit outputs
+- typed structures
+- traceable transformations
+
+No stage should:
+- hide critical decisions
+- mutate state implicitly
+
+---
+
+## 9. Error Handling Strategy
+
+The system must:
+
+- degrade gracefully
+- expose failures in trace
+- avoid silent fallback behavior
+
+Examples:
+- no relevant context -> explicit response
+- low confidence -> uncertainty surfaced
+- retrieval failure -> visible error
+
+---
+
+## 10. Non-Goals (V1)
+
+The system does NOT aim to:
+
+- execute external actions
+- call arbitrary tools
+- orchestrate multi-agent workflows
+- automate business processes
+- replace human decision-making
+- prioritize long continuous conversation management
+
+---
+
+## 11. Evolution Direction
+
+Future extensions may include:
+
+- advanced knowledge promotion rules
+- adaptive retrieval strategies
+- tool integration
+- partial automation layers
+
+These are intentionally deferred.
+
+---
+
+## 12. Summary
+
+The Answer Engine is:
+
+- a pipeline-driven answering runtime
+- grounded in CfHEE knowledge
+- controlled by explicit architecture
+- designed for transparency and reliability
+
+It prioritizes:
+- correctness over fluency
+- traceability over abstraction
+- control over autonomy
+# CFHEE_API — External Dependency Contract
+
+---
+
+## 1. Purpose
+
+This document describes the CfHEE API as an **external dependency contract** for the Answer Engine.
+
+It exists to:
+
+- define how Answer Engine interacts with CfHEE
+- provide a stable reference for Codex
+- prevent API misuse or hallucinated integrations
+
+This document is a **snapshot of the CfHEE API**, not its source of truth.
+
+---
+
+## 2. Ownership & Boundary
+
+- CfHEE owns this API
+- Answer Engine consumes it
+- this document must NOT redefine CfHEE behavior
+
+Key boundary:
+
+> CfHEE = scoped execution engine  
+> Answer Engine = orchestration + reasoning layer
+
+CfHEE:
+- does NOT infer scope
+- does NOT orchestrate workflows
+
+Answer Engine:
+- MUST provide scope
+- MUST handle orchestration
+
+---
+
+## 3. Integration Role
+
+Answer Engine uses CfHEE for:
+
+- scoped retrieval
+- scope hierarchy inspection
+- context building
+- capability validation
+
+Answer Engine does NOT use CfHEE for:
+
+- orchestration
+- reasoning
+- answer generation (core flow)
+
+---
+
+## 4. Core API Principles (Critical)
+
+### 4.1 Scope is mandatory
+
+All retrieval operations require explicit scope.
+
+CfHEE:
+- does NOT perform scope inference
+- does NOT widen scope implicitly
+
+This is a strict rule.
+
+---
+
+### 4.2 Hard scope model
+
+Scope fields:
+
+- workspace
+- domain
+- project (optional)
+- client (optional)
+- module (optional)
+
+Hierarchy rules:
+
+- client requires project
+- module requires client
+
+---
+
+### 4.3 No implicit cross-scope behavior
+
+- no fallback to broader scope
+- no cross-domain blending
+- no automatic scope expansion
+
+---
+
+### 4.4 API is deterministic
+
+Given:
+- same query
+- same scope
+
+Result must be stable.
+
+---
+
+## 5. System Endpoints
+
+### GET /api/v1/health
+
+Used to verify:
+
+- service availability
+- API version
+- capabilities
+
+Example response:
+
+{
+  "status": "ok",
+  "service": "cfhee",
+  "api_version": "v1",
+  "capabilities": {
+    "scoped_retrieval": true,
+    "scope_values": true,
+    "grounded_answer": true
+  }
+}
+
+---
+
+### GET /api/v1/capabilities
+
+Used to:
+
+- validate feature support
+- confirm integration compatibility
+
+---
+
+## 6. Required Capabilities (Answer Engine V1)
+
+The Answer Engine requires:
+
+- scoped_retrieval = true
+- scope_values = true
+
+If missing:
+→ Answer Engine must NOT start
+
+---
+
+## 7. Scope Helpers
+
+### GET /api/v1/scopes/values
+
+Returns stored scope values.
+
+Used for:
+- autocomplete
+- reuse
+- conservative scope construction
+
+---
+
+### GET /api/v1/scopes/tree
+
+Returns full scope hierarchy.
+
+Used for:
+- scope inference
+- candidate scope generation
+
+Important:
+
+- this is a visibility tool
+- NOT a scope inference engine
+
+---
+
+## 8. Retrieval
+
+### POST /api/v1/retrieval/query
+
+Primary retrieval endpoint.
+
+---
+
+### Request
+
+{
+  "query": "string",
+  "scope": { ScopeRef },
+  "top_k": 5,
+  "include_chunks": true
+}
+
+---
+
+### Response
+
+{
+  "status": "ok",
+  "active_scope": { ScopeRef },
+  "results": [
+    {
+      "document_id": number,
+      "chunk_id": number,
+      "similarity_score": float,
+      "text": "string"
+    }
+  ],
+  "result_count": number
+}
+
+---
+
+### Retrieval rules
+
+- always scoped
+- no implicit widening
+- no scope inference
+- no cross-scope blending
+
+---
+
+## 9. Context Build
+
+### POST /api/v1/context/build
+
+Used to:
+
+- construct structured context
+- prepare LLM-ready input
+
+Does NOT:
+
+- generate answers
+- infer scope
+
+---
+
+## 10. Shared Model
+
+### ScopeRef
+
+{
+  "workspace": "string",
+  "domain": "string",
+  "project": "string|null",
+  "client": "string|null",
+  "module": "string|null"
+}
+
+---
+
+## 11. Integration Rules
+
+Answer Engine must:
+
+- always provide explicit scope
+- never rely on CfHEE for orchestration
+- never assume undocumented endpoints
+- never extend CfHEE behavior implicitly
+
+---
+
+## 12. Important Notes
+
+- CfHEE is strict by design
+- CfHEE is NOT a discovery system
+- CfHEE is NOT an agent system
+
+This separation is a core architectural rule.
+
+---
+
+## 13. Summary
+
+CfHEE provides:
+
+- scoped retrieval
+- scope structure
+- context preparation
+
+Answer Engine provides:
+
+- scope inference
+- orchestration
+- reasoning
+- answer validation
+
+This boundary must remain intact.
+# Dev Changelog
+
+## 2026-03-31
+
+- Created the initial backend scaffold under `apps/backend`.
+- Added an installable Python package at `apps/backend/src/answer_engine_backend`.
+- Added a minimal FastAPI bootstrap in `answer_engine_backend.main`.
+- Added an unversioned `GET /health` endpoint returning simple JSON health data.
+- Added backend packaging and runtime dependencies for local editable installation.
+- Added `docs/PROMPTING_GUIDE.md` because it was referenced by the documentation workflow but missing from the repository.
+- Updated project state, current focus, and documentation index references to match the current repository state.
+
+## 2026-04-01
+
+- Refined the documentation set to clarify the V1 direction as run-centric rather than chat-centric.
+- Updated `ARCHITECTURE`, `ANSWER_PIPELINE`, and `DOMAIN_MODEL` to make `AnswerRun` the primary runtime unit and to keep conversation support lightweight and optional in V1.
+- Split verification in the documentation into evidence verification and response evaluation, and added the internal `AnswerPolicy` runtime concept.
+- Updated decision records, project state, and docs index to remove stale references and keep the Answer Engine / CfHEE boundary explicit.
+# CURRENT_FOCUS — Answer Engine
+
+---
+
+## CURRENT FOCUS
+
+Initial backend scaffold for the Answer Engine.
+
+Status:
+- minimal scaffold implemented
+- no pipeline behavior implemented
+
+---
+
+## CURRENT GOAL
+
+Create a minimal FastAPI application that can start and respond to a basic health check request.
+
+---
+
+## SCOPE
+
+Included:
+- project structure initialization
+- FastAPI app setup
+- basic routing
+- `/health` endpoint
+
+Excluded:
+- pipeline implementation
+- CfHEE integration
+- model provider integration
+- domain model usage
+- persistence layer
+- frontend
+
+---
+
+## DONE WHEN
+
+- FastAPI server starts successfully
+- `/health` endpoint responds with a valid JSON response
+- project structure is ready for further backend development
+
+---
+
+## NOT IN SCOPE
+
+- query processing
+- scope inference
+- retrieval logic
+- context building
+- answer generation
+- verification logic
+- UI development
+
+---
+
+## NOTES
+
+This step establishes the execution foundation.
+
+No business logic or pipeline behavior should be implemented at this stage.
+# Architectural Decisions — Answer Engine
+
+---
+
+## ADR-001
+The backend is Python + FastAPI.
+Reason: consistency with CfHEE, strong ecosystem for AI orchestration, and rapid development of pipeline-based services.
+
+---
+
+## ADR-002
+The frontend is Angular (standalone components).
+Reason: existing familiarity and alignment with modern Angular best practices.
+
+---
+
+## ADR-003
+The Answer Engine is defined as a pipeline-driven answering runtime, not an agent-based system.
+Reason: deterministic execution, traceability, and debuggability are prioritized over emergent behavior.
+
+---
+
+## ADR-004
+The system uses explicit pipeline stages instead of implicit orchestration.
+Reason: each transformation step must be observable, testable, and controllable.
+
+---
+
+## ADR-005
+Scope selection is fully automatic and must not be required from the user.
+Reason: the system is designed as a general answering interface, not a scoped query tool.
+
+---
+
+## ADR-006
+Scope inference must follow a hybrid approach:
+- heuristic filtering
+- LLM-assisted ranking
+- retrieval-based validation
+Reason: combining deterministic and probabilistic methods improves reliability and reduces hallucination risk.
+
+---
+
+## ADR-007
+Retrieval is a multi-stage process, not a single operation.
+Reason: better coverage, validation, and comparison across scopes.
+
+---
+
+## ADR-008
+All answers must be grounded in retrieved context whenever retrieval is used.
+Reason: correctness and trust are prioritized over fluent but unsupported responses.
+
+---
+
+## ADR-009
+Answer verification is a mandatory pipeline stage.
+Reason: local models (e.g. 7B class) require additional validation to reduce hallucination and ensure reliability.
+
+---
+
+## ADR-010
+The system must expose full execution trace for every answer.
+Reason: inspectability is a core feature, not an optional debugging tool.
+
+---
+
+## ADR-011
+The model provider must remain abstracted and replaceable.
+Reason: local-first execution now, flexible model integration later.
+
+---
+
+## ADR-012
+CfHEE is used as the primary knowledge and long-term structured knowledge layer.
+Reason: separation of concerns and reuse of existing scoped retrieval infrastructure.
+
+---
+
+## ADR-013
+Short-term working memory must remain inside the Answer Engine.
+Reason: intermediate pipeline state is transient and should not pollute long-term storage.
+
+---
+
+## ADR-014
+Raw interaction persistence stays in the Answer Engine. Only structured or reusable long-term knowledge may be promoted to CfHEE.
+Reason: preserve the module boundary, avoid raw conversation dump behavior in CfHEE, and keep long-term knowledge curation explicit.
+
+---
+
+## ADR-015
+No implicit fallback behavior is allowed in the pipeline.
+Reason: all decisions must be explicit and visible in the trace.
+
+---
+
+## ADR-016
+Failure states must be surfaced explicitly to the user.
+Reason: silent failure or hidden fallback reduces trust and debuggability.
+
+---
+
+## ADR-017
+The system must prefer incomplete but correct answers over complete but hallucinated ones.
+Reason: correctness is prioritized over perceived completeness.
+
+---
+
+## ADR-018
+The Answer Engine is not responsible for document ingestion or knowledge creation.
+Reason: ingestion belongs to CfHEE, maintaining a clean module boundary.
+
+---
+
+## ADR-019
+The Answer Engine must not perform external tool execution in V1.
+Reason: keep the system focused on answering, not automation or orchestration.
+
+---
+
+## ADR-020
+The system must be local-first in execution.
+Reason: independence from external services and alignment with the CfHEE design philosophy.
+
+---
+
+## ADR-021
+All pipeline data structures must conform to the DOMAIN_MODEL definitions.
+Reason: consistency, stability, and prevention of schema drift.
+
+---
+
+## ADR-022
+New functionality must map to an explicit pipeline stage or introduce a new stage.
+Reason: prevent hidden logic and maintain architectural clarity.
+
+---
+
+## ADR-023
+The system must not evolve into a general-purpose copilot without explicit redesign.
+Reason: preserving focus on high-trust answering instead of uncontrolled feature expansion.
+
+---
+
+## ADR-024
+Traceability is a first-class requirement, not a developer-only feature.
+Reason: both developers and advanced users must understand how answers are produced.
+
+---
+
+## ADR-025
+Scope inference must never silently expand into unrelated domains without validation.
+Reason: prevents cross-domain contamination and incorrect answers.
+
+---
+
+## ADR-026
+The pipeline must remain reproducible given the same inputs and configuration.
+Reason: ensures testability and reliability of the system.
+
+---
+
+## ADR-027
+The Answer Engine is an execution layer on top of CfHEE, not a replacement for it.
+Reason: preserves modular architecture and reuse of the knowledge layer.
+
+## ADR-028
+Repository-level operational scripts must live under the root `scripts/` directory.
+Reason: keep developer workflow entrypoints explicit, discoverable, and consistent across environments.
+
+---
+
+## ADR-029
+Local development startup must use a root-level `scripts/dev-up.ps1` entrypoint.
+Reason: environment preparation and process startup should be standardized instead of manually repeated.
+
+---
+
+## ADR-030
+Answer Engine local development must avoid common default dev ports such as 4200 and 8000.
+Reason: those ports are frequently occupied by unrelated local projects and increase collision risk.
+
+---
+
+## ADR-031
+Default local development ports are:
+- frontend: `8760`
+- backend: `8761`
+Reason: these ports are intentionally less common and should reduce local conflicts.
+
+---
+
+## ADR-032
+The development startup script is responsible for checking local prerequisites and starting only the layers relevant to the current development model.
+Reason: the workflow should remain practical during early local-first development and evolve later without changing the basic entrypoint pattern.
+
+## ADR-033
+The Answer Engine development startup must verify CfHEE availability before starting local services.
+Reason: CfHEE is a required upstream dependency of the Answer Engine and the module should not appear healthy when its knowledge/memory backend is unavailable.
+
+---
+
+## ADR-034
+CfHEE dependency verification must include both health and capability checks.
+Reason: service reachability alone is insufficient; the Answer Engine depends on specific CfHEE capabilities and must fail early if they are missing.
+
+---
+
+## ADR-035
+Default CfHEE base URL for local development is `http://127.0.0.1:8770`.
+Reason: the Answer Engine should use a stable, non-casual local integration target and avoid common default ports.
+
+---
+
+## ADR-036
+The Answer Engine `dev-up.ps1` script must fail fast if CfHEE is not reachable or does not expose the minimum required capabilities.
+Reason: partial startup would create a misleading local development state and complicate debugging.
+
+---
+
+## ADR-037
+V1 is run-centric, not chat-centric.
+Reason: the primary V1 problem is producing one grounded answer for one question through an explicit pipeline, not managing long continuous conversation behavior.
+
+---
+
+## ADR-038
+`AnswerRun` is the primary runtime unit.
+Reason: the pipeline must produce a single traceable execution record that binds together analysis, retrieval, context, generation, and verification outputs.
+
+---
+
+## ADR-039
+Verification is split into evidence verification and response evaluation.
+Reason: grounding against evidence and judging whether the response satisfactorily answers the question are distinct checks and should remain separately traceable.
+
+---
+
+## ADR-040
+Raw interaction persistence stays in the Answer Engine.
+Reason: local interaction history and trace-linked run records belong to the execution layer, not the external knowledge system.
+
+---
+
+## ADR-041
+Only structured and reusable long-term knowledge may be promoted into CfHEE.
+Reason: CfHEE remains the external knowledge and memory dependency and must not absorb raw conversation dump behavior.
+
+---
+
+## ADR-042
+V1 frontend UX is a main question/answer surface with an optional inspect panel.
+Reason: the initial user experience should stay aligned with run-centric answering while still exposing trace, sources, context, and verification details when needed.
+# Docs Index - Answer Engine
+
+This file explains the role of each documentation file in the Answer Engine repository.
+
+The Answer Engine is a structured answering runtime built on top of CfHEE.
+This documentation set acts as the **external project memory** and must always reflect the current state of the system.
+
+---
+
+## Core architecture docs
+
+### `docs/ARCHITECTURE.md`
+High-level architecture of the Answer Engine.
+
+Describes:
+- system boundaries (Answer Engine vs CfHEE)
+- runtime pipeline structure
+- backend and frontend architecture
+- V1 runtime direction
+
+This is the primary reference for how the system is supposed to work.
+
+---
+
+### `docs/DECISIONS.md`
+List of architectural and design decisions that must not be casually reinterpreted.
+
+Use this to:
+- prevent drift in system behavior
+- enforce agreed patterns (e.g. pipeline over agents, hybrid scope inference)
+- keep Codex aligned with established constraints
+
+---
+
+### `docs/ANSWER_PIPELINE.md`
+Defines the full answering pipeline.
+
+Includes:
+- query analysis
+- answer policy resolution
+- scope inference (hybrid)
+- retrieval planning
+- multi-stage retrieval
+- context assembly
+- answer generation
+- evidence verification
+- response evaluation
+
+This is the most critical execution document.
+Any change to runtime behavior must be reflected here.
+
+---
+
+### `docs/DOMAIN_MODEL.md`
+Defines all core data structures used by the Answer Engine.
+
+Includes:
+- answer run
+- answer policy
+- optional chat session / message support
+- context pack
+- scope references
+- retrieval results
+
+Use this when:
+- modifying persistence
+- working with pipeline data
+- designing API responses
+
+---
+
+## Live project state docs
+
+### `docs/PROJECT_STATE.md`
+Current verified implementation state.
+
+Use this first to understand:
+- what already exists
+- what is implemented vs planned
+
+This is the most important "truth" document.
+
+---
+
+### `docs/CURRENT_FOCUS.md`
+Current execution anchor
+
+- Not a list.
+- Not a roadmap.
+- Not a backlog.
+
+But rather:
+"What is the ONE thing we're working on right now?"
+
+---
+
+### `docs/CHANGELOG_DEV.md`
+Chronological development log.
+
+Tracks:
+- what was implemented
+- what changed
+- observed issues
+- important insights
+
+---
+
+## Runtime docs
+
+### `docs/PORTABLE_RUNTIME.md`
+Defines how the Answer Engine runs locally.
+
+Includes:
+- runtime composition
+- dependency on CfHEE
+- model provider setup (Ollama, etc.)
+- minimal runnable environment
+
+---
+
+### `docs/RUNTIME_OPERATIONS.md`
+Operational guide.
+
+Includes:
+- start/stop
+- logs
+- debugging
+- development workflow
+
+---
+
+### `docs/OPERATIONS_SURFACE.md`
+Defines the intended operational/debug surface.
+
+Includes:
+- trace inspection
+- pipeline visibility
+- developer/debug UI concepts
+
+---
+
+### `docs/CFHEE_API.md`
+External dependency contract for CfHEE.
+
+Use this when:
+- implementing CfHEE integration
+- working on retrieval logic
+- handling scope and capabilities
+
+---
+
+## Prompting docs
+
+### `docs/PROMPTING_GUIDE.md`
+Rules for working with Codex in this repository.
+
+Use this before writing prompts.
+
+---
+
+### `docs/PROMPT_TEMPLATE.md`
+Reusable prompt template for Codex.
+
+Ensures:
+- consistency
+- correct context loading
+- structured outputs
+
+---
+
+## Frontend docs
+
+### `docs/FRONTEND_STYLE_GUIDE.md`
+Frontend UI consistency rules.
+
+Includes:
+- layout structure
+- panel system (chat + trace + sources)
+- styling constraints
+
+---
+
+## Meta docs
+
+### `docs/DOCS_INDEX.md`
+Index of the documentation system.
+
+Use this to locate the correct source of truth before making changes.
+
+---
+
+## Suggested reading order for AI assistants
+
+For most implementation tasks:
+
+1. `AGENTS.md`
+2. `docs/DOCS_INDEX.md`
+3. `docs/ARCHITECTURE.md`
+4. `docs/ANSWER_PIPELINE.md`
+5. `docs/DOMAIN_MODEL.md`
+6. `docs/DECISIONS.md`
+7. `docs/PROJECT_STATE.md`
+8. `docs/CURRENT_FOCUS.md`
+9. `docs/PORTABLE_RUNTIME.md`
+10. `docs/RUNTIME_OPERATIONS.md`
+11. `docs/OPERATIONS_SURFACE.md`
+12. `docs/PROMPTING_GUIDE.md`
+13. `docs/CHANGELOG_DEV.md`
+
+---
+
+## Human usage note
+
+If resuming work:
+
+Start with:
+- `docs/PROJECT_STATE.md`
+- `docs/CURRENT_FOCUS.md`
+- `docs/CHANGELOG_DEV.md`
+
+Then:
+- `docs/ARCHITECTURE.md`
+- `docs/ANSWER_PIPELINE.md`
+
+---
+
+## Authority rules
+
+When documents disagree:
+
+1. `docs/PROJECT_STATE.md` -> current reality
+2. `docs/CURRENT_FOCUS.md` -> current execution target
+3. `docs/DECISIONS.md` -> fixed decisions
+4. `docs/ANSWER_PIPELINE.md` -> runtime behavior
+5. `docs/ARCHITECTURE.md` -> long-term structure
+6. `docs/CHANGELOG_DEV.md` -> historical context
+
+---
+
+## Important rule
+
+This documentation system is the **external project memory**.
+
+Every iteration MUST:
+- read relevant docs before implementation
+- update docs immediately after implementation
+
+If documentation is outdated, the system is considered broken.
+# DOMAIN_MODEL - Answer Engine
+
+---
+
+## 1. Purpose
+
+This document defines the core data structures used across the Answer Engine.
+
+It is the authoritative reference for:
+- pipeline data flow
+- backend internal models
+- API response structures
+- trace representation
+
+All pipeline stages MUST use these structures or compatible extensions.
+
+---
+
+## 2. Design Principles
+
+### 2.1 Explicit Structures
+All data must be structured and typed.
+No implicit or loosely shaped objects are allowed.
+
+### 2.2 Trace Compatibility
+Every structure must be traceable and serializable.
+
+### 2.3 Pipeline Alignment
+Each pipeline stage produces and consumes defined models.
+
+### 2.4 Separation of Concerns
+Different data types must not be merged:
+- run data
+- optional conversation data
+- retrieval data
+- context data
+- model output
+
+---
+
+## 3. Core Entities
+
+---
+
+### 3.1 AnswerRun
+
+Represents the primary runtime unit in V1.
+
+AnswerRun:
+- id: string
+- query: string
+- created_at: datetime
+- answer_policy: AnswerPolicy
+
+- query_analysis: QueryAnalysisResult
+- scope_inference: ScopeInferenceResult
+- retrieval_plan: RetrievalPlan
+- retrieval_result: RetrievalResult
+- context_pack: ContextPack
+- answer_result: AnswerResult
+- evidence_verification_result: EvidenceVerificationResult
+- response_evaluation_result: ResponseEvaluationResult
+
+- conversation_ref: ConversationRef (optional)
+- timings: TimingInfo
+- errors: list (optional)
+
+---
+
+### 3.2 ChatSession
+
+Optional lightweight grouping for multiple runs or interactions.
+
+ChatSession:
+- id: string
+- title: string
+- created_at: datetime
+- updated_at: datetime
+- metadata: dict (optional)
+
+---
+
+### 3.3 ChatMessage
+
+Optional raw interaction record stored by the Answer Engine.
+
+ChatMessage:
+- id: string
+- session_id: string
+- role: "user" | "assistant"
+- content: string
+- created_at: datetime
+- metadata: dict (optional)
+
+---
+
+## 4. Pipeline Stage Models
+
+---
+
+### 4.1 QueryAnalysisResult
+
+QueryAnalysisResult:
+- normalized_query: string
+- intent_type: string
+- requires_retrieval: bool
+- query_variants: list[string] (optional)
+
+---
+
+### 4.2 ScopeInferenceResult
+
+ScopeInferenceResult:
+- primary_scope: ScopeReference
+- secondary_scopes: list[ScopeReference] (optional)
+- confidence_scores: dict[scope_id -> float]
+- validation_scores: dict[scope_id -> float]
+
+---
+
+### 4.3 ScopeReference
+
+Represents a CfHEE scope.
+
+ScopeReference:
+- workspace: string
+- domain: string
+- project: string (optional)
+- client: string (optional)
+- module: string (optional)
+
+---
+
+### 4.4 AnswerPolicy
+
+Internal backend/runtime control object resolved for a run.
+
+AnswerPolicy:
+- retrieval_required: bool
+- max_retrieval_rounds: int
+- default_top_k: int
+- verification_profile: string
+- response_style: string
+
+Notes:
+- internal to the backend/runtime
+- not a user-facing UI selection
+
+---
+
+### 4.5 ConversationRef
+
+Links an `AnswerRun` to optional conversation persistence structures.
+
+ConversationRef:
+- session_id: string (optional)
+- user_message_id: string (optional)
+- assistant_message_id: string (optional)
+
+---
+
+### 4.6 RetrievalPlan
+
+RetrievalPlan:
+- rounds: list[RetrievalRound]
+- fallback_rules: dict (optional)
+
+---
+
+### 4.7 RetrievalRound
+
+RetrievalRound:
+- scope: ScopeReference
+- top_k: int
+- strategy_type: string
+
+---
+
+### 4.8 RetrievalResult
+
+RetrievalResult:
+- results_by_round: list[RetrievalRoundResult]
+- aggregated_results: list[RetrievedChunk]
+
+---
+
+### 4.9 RetrievalRoundResult
+
+RetrievalRoundResult:
+- scope: ScopeReference
+- chunks: list[RetrievedChunk]
+
+---
+
+### 4.10 RetrievedChunk
+
+Represents a unit returned from CfHEE.
+
+RetrievedChunk:
+- document_id: string
+- chunk_id: string
+- content: string
+- score: float
+- metadata: dict
+
+---
+
+### 4.11 ContextPack
+
+ContextPack:
+- selected_chunks: list[RetrievedChunk]
+- source_mapping: list[SourceReference]
+- structured_context: string
+- token_estimate: int
+
+---
+
+### 4.12 SourceReference
+
+SourceReference:
+- document_id: string
+- chunk_id: string
+- position: int
+
+---
+
+### 4.13 AnswerResult
+
+AnswerResult:
+- answer_text: string
+- token_usage: TokenUsage
+- model_metadata: dict
+
+---
+
+### 4.14 TokenUsage
+
+TokenUsage:
+- prompt_tokens: int
+- completion_tokens: int
+- total_tokens: int
+
+---
+
+### 4.15 EvidenceVerificationResult
+
+EvidenceVerificationResult:
+- grounded: bool
+- uncertainty_flags: list[string]
+- scope_consistency_ok: bool
+- requires_regeneration: bool
+
+---
+
+### 4.16 ResponseEvaluationResult
+
+ResponseEvaluationResult:
+- coverage_ok: bool
+- response_quality_ok: bool
+- limitations: list[string]
+- requires_regeneration: bool
+
+---
+
+### 4.17 TimingInfo
+
+TimingInfo:
+- total_time_ms: int
+- stage_times: dict[string -> int]
+
+---
+
+## 5. API Response Model
+
+---
+
+### 5.1 FinalResponse
+
+FinalResponse:
+- answer_text: string
+- sources: list[SourceReference]
+- inferred_scopes: list[ScopeReference]
+- verification_summary: dict
+- trace_id: string
+
+---
+
+## 6. Trace Model
+
+The trace is a serialized AnswerRun.
+
+Requirements:
+- complete pipeline visibility
+- JSON serializable
+- stable structure
+
+---
+
+## 7. Memory Model Alignment
+
+### 7.1 CfHEE Integration
+
+Stored in CfHEE:
+- documents
+- chunks
+- promoted structured knowledge only
+
+---
+
+### 7.2 Answer Engine Storage
+
+Stored locally:
+- AnswerRun (optional persistence)
+- ChatSession (optional)
+- ChatMessage (optional)
+
+Conversation persistence:
+- raw interaction records owned by the Answer Engine
+- useful for local history and trace linkage
+
+Knowledge promotion:
+- only structured, reusable long-term knowledge may be sent to CfHEE
+- raw conversation dumps do not belong in CfHEE
+
+---
+
+### 7.3 Transient Data
+
+NOT persisted:
+- intermediate pipeline states
+- temporary scoring
+- candidate scopes
+
+---
+
+## 8. Extension Rules
+
+New fields:
+- must be backward compatible
+- must not break existing models
+
+New models:
+- must be added explicitly here
+- must map to a pipeline stage
+
+---
+
+## 9. Summary
+
+The domain model defines:
+
+- how data flows through the pipeline
+- how results are structured
+- how traceability is ensured
+
+It enforces:
+- consistency
+- debuggability
+- extensibility
+# FRONTEND_STYLE_GUIDE — Answer Engine
+
+---
+
+## 1. Purpose
+
+This document defines the minimal frontend styling and UI consistency rules for the Answer Engine.
+
+It ensures:
+- visual consistency
+- predictable UI behavior
+- clean developer experience during iteration
+
+This is intentionally minimal for V1 and can be extended later.
+
+---
+
+## 2. Core Principles
+
+### 2.1 Dark Theme Only (V1)
+
+The application must use a dark theme by default.
+
+There is no light mode in V1.
+
+Reason:
+- better readability for developer-focused usage
+- consistency across all screens
+- reduced design complexity
+
+---
+
+### 2.2 Functional over Decorative
+
+UI should prioritize:
+- clarity
+- usability
+- readability
+
+Avoid:
+- heavy animations
+- unnecessary visual effects
+- complex styling
+
+---
+
+### 2.3 Consistency over Creativity
+
+All components must follow consistent:
+- spacing
+- colors
+- button behavior
+- layout structure
+
+---
+
+## 3. Layout Structure
+
+The UI follows a 3-column layout:
+
+LEFT:
+- conversation list
+- session management
+
+CENTER:
+- chat interface
+- message stream
+- input area
+
+RIGHT:
+- sources panel
+- context viewer
+- trace / debug panel
+
+This layout must remain stable across iterations.
+
+---
+
+## 4. Color System (Dark Theme)
+
+### Backgrounds
+
+- primary background: very dark (near black)
+- secondary panels: slightly lighter dark
+- cards: distinct but subtle contrast
+
+---
+
+### Text
+
+- primary text: high contrast (white / near white)
+- secondary text: muted gray
+- disabled text: low contrast gray
+
+---
+
+### Accent
+
+- primary accent color: used for active elements
+- hover states: slightly brighter accent
+- focus states: visible but minimal
+
+---
+
+## 5. Button System
+
+Buttons must follow semantic types.
+
+---
+
+### 5.1 Primary Button
+
+Usage:
+- main actions (send, confirm)
+
+Style:
+- solid background
+- high contrast text
+
+---
+
+### 5.2 Secondary Button
+
+Usage:
+- non-critical actions
+
+Style:
+- outlined or low-emphasis
+
+---
+
+### 5.3 Danger Button
+
+Usage:
+- delete actions
+- destructive operations
+
+Style:
+- red color
+- must be clearly distinguishable
+
+---
+
+### 5.4 Disabled State
+
+- reduced opacity
+- no hover effect
+- non-clickable
+
+---
+
+## 6. Chat UI Rules
+
+### Messages
+
+- user messages: right-aligned
+- assistant messages: left-aligned
+
+---
+
+### Message Blocks
+
+- clear separation between messages
+- consistent padding
+- readable line spacing
+
+---
+
+### Input Area
+
+- fixed at bottom
+- clearly separated from chat
+- must support multiline input
+
+---
+
+## 7. Panels
+
+### 7.1 Left Panel
+
+- list-based layout
+- scrollable
+- active item clearly highlighted
+
+---
+
+### 7.2 Right Panel
+
+Contains:
+- sources
+- context
+- trace
+
+Must support:
+- tabbed or section-based view
+- scrollable content
+- structured data display
+
+---
+
+## 8. Developer / Debug View (Important)
+
+The UI must support visibility of:
+
+- inferred scopes
+- retrieved chunks
+- context pack
+- pipeline trace
+- verification result
+
+This can be:
+- a dedicated panel
+- or a toggleable debug mode
+
+---
+
+## 9. Spacing & Layout
+
+- consistent padding across components
+- avoid cramped UI
+- prefer readable spacing over compactness
+
+---
+
+## 10. Typography
+
+- simple sans-serif font
+- no decorative fonts
+- consistent font sizes
+
+---
+
+## 11. Icons (Optional)
+
+- minimal usage
+- only where it improves clarity
+- avoid clutter
+
+---
+
+## 12. Responsiveness (V1)
+
+Not a priority.
+
+Focus:
+- desktop layout
+- developer usage
+
+---
+
+## 13. Extension Rules
+
+New UI elements must:
+- follow existing color and spacing rules
+- reuse button styles
+- not introduce new visual paradigms
+
+---
+
+## 14. Summary
+
+The frontend should be:
+
+- dark
+- simple
+- consistent
+- functional
+- developer-friendly
+
+It is NOT:
+- a marketing UI
+- a consumer-grade polished product
+- visually experimental
+
+It is a working interface for a high-trust answering system.
+# PROJECT_STATE — Answer Engine
+
+---
+
+## 1. Current Status
+
+The Answer Engine project is in **V0 early implementation state**.
+
+A minimal backend runtime foundation now exists.
+
+The system currently consists of:
+- architectural design
+- pipeline specification
+- domain model definition
+- decision records
+- documentation framework
+- minimal backend application scaffold
+
+The documented V1 direction is now:
+- run-centric, not chat-centric
+- centered on `AnswerRun` as the primary runtime unit
+- focused on one question -> one grounded answer
+- not focused on long continuous conversation handling
+
+---
+
+## 2. Implemented Components
+
+### 2.1 Backend
+Status: PARTIALLY IMPLEMENTED
+
+- FastAPI application scaffold exists under `apps/backend`
+- Unversioned `GET /health` endpoint exists
+- Local editable install is defined for the backend package
+- No pipeline execution logic exists
+- No CfHEE integration is implemented
+
+---
+
+### 2.2 Frontend
+Status: NOT IMPLEMENTED
+
+- No Angular project exists
+- No UI components exist
+- No question/answer surface is implemented
+- No trace/debug UI exists
+
+---
+
+### 2.3 Model Integration
+Status: NOT IMPLEMENTED
+
+- No Ollama integration
+- No model provider abstraction
+- No generation or streaming logic
+
+---
+
+### 2.4 Storage
+Status: NOT IMPLEMENTED
+
+- No AnswerRun persistence
+- No raw interaction persistence
+- No optional conversation/session persistence
+
+---
+
+### 2.5 CfHEE Integration
+Status: NOT IMPLEMENTED
+
+- No API client
+- No retrieval calls
+- No scope fetching
+- No knowledge promotion behavior
+
+---
+
+## 3. Defined but Not Implemented
+
+The following are fully specified in documentation but not yet implemented:
+
+### 3.1 Pipeline
+Defined in:
+- docs/ANSWER_PIPELINE.md
+
+Includes:
+- Query Analysis
+- Answer Policy Resolution
+- Scope Inference (Hybrid)
+- Retrieval Planning
+- Multi-stage Retrieval
+- Context Assembly
+- Answer Generation
+- Evidence Verification
+- Response Evaluation
+
+---
+
+### 3.2 Domain Model
+Defined in:
+- docs/DOMAIN_MODEL.md
+
+Includes:
+- AnswerRun
+- AnswerPolicy
+- EvidenceVerificationResult
+- ResponseEvaluationResult
+- ChatSession (optional)
+- ChatMessage (optional)
+- Retrieval structures
+- ContextPack
+
+---
+
+### 3.3 Architecture
+Defined in:
+- docs/ARCHITECTURE.md
+
+Includes:
+- system layers
+- backend services
+- frontend structure
+- execution model
+
+---
+
+### 3.4 Decisions
+Defined in:
+- docs/DECISIONS.md
+
+Includes:
+- pipeline-first architecture
+- hybrid scope inference
+- grounded answering
+- traceability requirements
+
+---
+
+## 4. Known Constraints
+
+### 4.1 Local-first requirement
+The system must be able to run locally.
+
+---
+
+### 4.2 CfHEE dependency
+The Answer Engine depends on:
+- CfHEE API
+- scoped retrieval
+- scope hierarchy
+
+---
+
+### 4.3 No agent-based orchestration
+The system must follow a structured pipeline.
+
+---
+
+### 4.4 Full traceability required
+All pipeline steps must be inspectable.
+
+---
+
+## 5. Known Unknowns
+
+The following are not yet resolved:
+
+- exact prompt structure
+- token budgeting strategy
+- optimal chunk selection strategy
+- regeneration conditions in verification stages
+- persistence strategy for AnswerRun
+- rules for structured knowledge promotion into CfHEE
+
+---
+
+## 6. Initial Development State
+
+The project is ready for:
+
+- backend scaffold extension
+- pipeline skeleton implementation
+- first integration with CfHEE (read-only)
+
+No production-ready behavior exists yet.
+
+---
+
+## 7. What DOES NOT exist yet (Important)
+
+- no answering API endpoints
+- health endpoint only
+- functioning pipeline execution
+- AnswerRun execution
+- retrieval integration
+- model inference
+- UI interaction
+- trace visualization
+- implemented chat/session capability
+
+Any assumption that these exist is incorrect.
+
+---
+
+## 8. Development Readiness
+
+The project is considered:
+
+- Architecturally defined: YES
+- Ready for implementation: YES
+- Ready for backend foundation testing: YES
+- Ready for production: NO
+
+---
+
+## 9. Next Step Reference
+
+See:
+- docs/CURRENT_FOCUS.md
+
+This document defines the active implementation target.
+
+---
+
+## 10. Summary
+
+The Answer Engine is currently:
+
+- fully designed
+- specified
+- minimally implemented at the backend foundation level
+
+All future work must:
+- follow the defined architecture
+- adhere to the pipeline specification
+- respect the decision records
+- update this document after every iteration
+# PROMPTING_GUIDE - Answer Engine
+
+---
+
+## Purpose
+
+This document defines the minimum prompting rules for working in the Answer Engine repository.
+
+It exists to keep implementation aligned with:
+- the documented architecture
+- the explicit pipeline
+- the current verified project state
+
+---
+
+## Required context before implementation
+
+Read:
+- `AGENTS.md`
+- `docs/DOCS_INDEX.md`
+- `docs/ARCHITECTURE.md`
+- `docs/ANSWER_PIPELINE.md`
+- `docs/DOMAIN_MODEL.md`
+- `docs/DECISIONS.md`
+- `docs/PROJECT_STATE.md`
+- `docs/CURRENT_FOCUS.md`
+
+If the task touches recent work, also read:
+- `docs/CHANGELOG_DEV.md`
+
+---
+
+## Prompting rules
+
+- Keep the system pipeline-first, not agent-first.
+- Do not introduce hidden orchestration outside explicit pipeline stages.
+- Keep scope inference explicit and hybrid when that work is implemented.
+- Keep retrieval grounded in CfHEE and do not move CfHEE responsibilities into the Answer Engine.
+- Prefer small, vertical, verifiable changes over broad scaffolding.
+- Update documentation immediately after implementation.
+
+---
+
+## Documentation rule
+
+Documentation must reflect current reality.
+
+If code changes but documentation does not, the repository state is considered incorrect.
+# Prompt Template for Codex — Answer Engine
+
+Use this template when asking Codex to implement or modify anything in this repository.
+
+---
+
+## Standard opening (MANDATORY)
+
+Read `AGENTS.md` and review the documentation index first:
+- `docs/DOCS_INDEX.md`
+
+Then read all relevant documents under `docs/` based on that index.
+
+Before making changes, ALWAYS align with:
+
+- `docs/ARCHITECTURE.md`
+- `docs/ANSWER_PIPELINE.md`
+- `docs/DOMAIN_MODEL.md`
+- `docs/DECISIONS.md`
+- `docs/PROJECT_STATE.md`
+- `docs/CURRENT_FOCUS.md`
+- `docs/PROMPTING_GUIDE.md`
+
+If the task touches CfHEE integration boundaries, also read:
+- `docs/CFHEE_API.md`
+
+If the task relates to recent work, also read:
+- `docs/CHANGELOG_DEV.md`
+
+---
+
+## Task statement
+
+Implement the following narrow vertical slice:
+
+[DESCRIBE THE TASK HERE]
+
+---
+
+## Requirements
+
+- keep the implementation small and practical
+- do not refactor unrelated parts
+- avoid speculative abstractions
+- prefer explicit logic over implicit behavior
+- keep business logic readable and debuggable
+- preserve existing working behavior unless change is required
+
+---
+
+## Architectural constraints (MANDATORY)
+
+- follow the pipeline defined in `docs/ANSWER_PIPELINE.md`
+- do NOT introduce hidden logic outside pipeline stages
+- do NOT convert the system into an agent-based architecture
+- scope inference must remain explicit and hybrid
+- retrieval must not become implicit or uncontrolled
+- all major decisions must be traceable
+- do NOT bypass domain model definitions
+
+---
+
+## Explicit in-scope
+
+- [LIST WHAT IS IN SCOPE]
+
+---
+
+## Explicit out-of-scope
+
+- [LIST WHAT MUST NOT BE DONE]
+
+---
+
+## Implementation guidance
+
+- prefer minimal diffs
+- implement thin vertical slices
+- keep logic local and understandable
+- do not expand system responsibility
+- do not implement future features prematurely
+- prefer structured data over ad-hoc objects
+- ensure compatibility with DOMAIN_MODEL
+
+---
+
+## Deliverables
+
+1. [DELIVERABLE 1]
+2. [DELIVERABLE 2]
+3. [DELIVERABLE 3]
+
+---
+
+## Verification
+
+Clearly distinguish between:
+
+- implemented in code
+- verified by running locally
+- not verified due to environment limits
+
+Do NOT:
+- overclaim verification
+- assume behavior without testing
+
+---
+
+## Documentation update rules (MANDATORY)
+
+After implementation, ALWAYS update:
+
+- `docs/PROJECT_STATE.md`
+- `docs/CHANGELOG_DEV.md`
+
+Update other docs ONLY IF STRICTLY REQUIRED by the implemented change.
+
+Default rule:
+- do NOT edit documentation files unless the change directly affects their contract or truth content
+
+Update conditionally only when actually affected:
+
+- `docs/CURRENT_FOCUS.md` → only when the current execution target has been completed or intentionally changed
+- `docs/ARCHITECTURE.md` → only if architectural intent or system boundaries changed
+- `docs/ANSWER_PIPELINE.md` → only if pipeline behavior or stage responsibilities changed
+- `docs/DOMAIN_MODEL.md` → only if data structures or contracts changed
+- `docs/DECISIONS.md` → only if a new architectural decision was explicitly made
+- `docs/API_V1.md` → only if Answer Engine public API contract was introduced or changed
+- `docs/CFHEE_API.md` → only if the external dependency contract snapshot must be refreshed
+- `docs/FRONTEND_STYLE_GUIDE.md` → only if frontend styling rules changed
+- `docs/RUNTIME_OPERATIONS.md` → only if runtime usage or startup/operation behavior changed
+- `docs/PORTABLE_RUNTIME.md` → only if runtime packaging or deployment model changed
+- `docs/DOCS_INDEX.md` → only if a documentation file was added, removed, renamed, or its role materially changed
+- `README.md` → only if setup, usage, or project positioning changed
+
+Special rule for `docs/DOCS_INDEX.md`:
+- do NOT rewrite, simplify, or reorganize it opportunistically
+- edit it only for exact index maintenance
+- preserve existing structure and entries unless a specific documentation change requires an index update
+
+---
+
+## Documentation rules
+
+- reflect ONLY what is implemented or verified
+- do NOT speculate
+- keep updates concise and factual
+- maintain terminology consistency
+- do NOT introduce undocumented behavior
+
+## Documentation guardrail
+
+Do NOT rewrite documentation for style, brevity, cleanup, or reorganization unless explicitly asked.
+
+When updating docs:
+- make the smallest factual change possible
+- preserve structure, headings, and existing intent
+- do not delete content unless it is demonstrably obsolete and directly replaced by the implemented change
+- do not "simplify" governance documents
+
+---
+
+## Critical workflow rule
+
+This repository is documentation-driven.
+
+The correct workflow is:
+
+1. Read docs
+2. Implement small, focused change
+3. Update docs immediately
+
+If documentation is outdated, the system is considered broken.
+
+---
+
+## Final note
+
+Do NOT:
+
+- expand scope beyond CURRENT_FOCUS
+- introduce hidden orchestration
+- bypass the defined pipeline
+
+Keep the system:
+- explicit
+- traceable
+- controlled
+# RUNTIME_OPERATIONS — Answer Engine
+
+---
+
+## 1. Purpose
+
+This document defines how the Answer Engine local development environment is started, verified, and operated.
+
+---
+
+## 2. Development entrypoint
+
+The canonical local development entrypoint is:
+
+- `.\scripts\dev-up.ps1`
+
+This script is responsible for:
+- checking required local tools
+- preparing backend and frontend dependencies
+- checking Ollama availability
+- verifying CfHEE availability
+- starting backend and frontend processes
+
+---
+
+## 3. Local development ports
+
+Default local development ports are:
+
+- Answer Engine frontend: `8760`
+- Answer Engine backend: `8761`
+- CfHEE runtime: `8770` (expected upstream dependency)
+
+These ports are intentionally non-default to reduce conflicts with other local projects.
+
+---
+
+## 4. CfHEE dependency rule
+
+The Answer Engine depends on a running CfHEE instance.
+
+The startup script must verify:
+
+- `GET /api/v1/health`
+- `GET /api/v1/capabilities`
+
+Default expected base URL:
+
+- `http://127.0.0.1:8770`
+
+If CfHEE is unavailable or does not expose the required capabilities, the Answer Engine development startup must fail.
+
+---
+
+## 5. Minimum required CfHEE capabilities
+
+At minimum, the startup check should require:
+
+- `scoped_retrieval = true`
+- `scope_values = true`
+
+Later versions may add stricter requirements depending on integration depth.
+
+---
+
+## 6. Startup behavior
+
+The intended startup order is:
+
+1. check local tools
+2. verify CfHEE availability
+3. prepare backend environment
+4. prepare frontend environment
+5. verify Ollama availability
+6. start backend
+7. start frontend
+
+If step 2 fails, the startup must stop.

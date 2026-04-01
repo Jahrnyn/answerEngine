@@ -21,6 +21,9 @@ Before making changes, ALWAYS align with:
 - `docs/CURRENT_FOCUS.md`
 - `docs/PROMPTING_GUIDE.md`
 
+If the task touches CfHEE integration boundaries, also read:
+- `docs/CFHEE_API.md`
+
 If the task relates to recent work, also read:
 - `docs/CHANGELOG_DEV.md`
 
@@ -110,20 +113,30 @@ After implementation, ALWAYS update:
 - `docs/PROJECT_STATE.md`
 - `docs/CHANGELOG_DEV.md`
 
-Update if affected:
+Update other docs ONLY IF STRICTLY REQUIRED by the implemented change.
 
-- `docs/CURRENT_FOCUS.md`
-- `docs/ARCHITECTURE.md`
-- `docs/ANSWER_PIPELINE.md`
-- `docs/DOMAIN_MODEL.md`
-- `docs/DECISIONS.md`
-- `docs/API_V1.md` (when introduced or modified)
-- `docs/FRONTEND_STYLE_GUIDE.md` (if UI is affected)
-- `docs/RUNTIME_OPERATIONS.md` (if runtime behavior changes)
-- `docs/PORTABLE_RUNTIME.md` (if runtime model changes)
-- `docs/CFHEE_API.md` if the task involves CfHEE integration
-- `docs/DOCS_INDEX.md`
-- `README.md`
+Default rule:
+- do NOT edit documentation files unless the change directly affects their contract or truth content
+
+Update conditionally only when actually affected:
+
+- `docs/CURRENT_FOCUS.md` → only when the current execution target has been completed or intentionally changed
+- `docs/ARCHITECTURE.md` → only if architectural intent or system boundaries changed
+- `docs/ANSWER_PIPELINE.md` → only if pipeline behavior or stage responsibilities changed
+- `docs/DOMAIN_MODEL.md` → only if data structures or contracts changed
+- `docs/DECISIONS.md` → only if a new architectural decision was explicitly made
+- `docs/API_V1.md` → only if Answer Engine public API contract was introduced or changed
+- `docs/CFHEE_API.md` → only if the external dependency contract snapshot must be refreshed
+- `docs/FRONTEND_STYLE_GUIDE.md` → only if frontend styling rules changed
+- `docs/RUNTIME_OPERATIONS.md` → only if runtime usage or startup/operation behavior changed
+- `docs/PORTABLE_RUNTIME.md` → only if runtime packaging or deployment model changed
+- `docs/DOCS_INDEX.md` → only if a documentation file was added, removed, renamed, or its role materially changed
+- `README.md` → only if setup, usage, or project positioning changed
+
+Special rule for `docs/DOCS_INDEX.md`:
+- do NOT rewrite, simplify, or reorganize it opportunistically
+- edit it only for exact index maintenance
+- preserve existing structure and entries unless a specific documentation change requires an index update
 
 ---
 
@@ -134,6 +147,16 @@ Update if affected:
 - keep updates concise and factual
 - maintain terminology consistency
 - do NOT introduce undocumented behavior
+
+## Documentation guardrail
+
+Do NOT rewrite documentation for style, brevity, cleanup, or reorganization unless explicitly asked.
+
+When updating docs:
+- make the smallest factual change possible
+- preserve structure, headings, and existing intent
+- do not delete content unless it is demonstrably obsolete and directly replaced by the implemented change
+- do not "simplify" governance documents
 
 ---
 

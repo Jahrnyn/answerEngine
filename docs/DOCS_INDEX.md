@@ -1,4 +1,4 @@
-# Docs Index — Answer Engine
+# Docs Index - Answer Engine
 
 This file explains the role of each documentation file in the Answer Engine repository.
 
@@ -16,7 +16,7 @@ Describes:
 - system boundaries (Answer Engine vs CfHEE)
 - runtime pipeline structure
 - backend and frontend architecture
-- long-term design direction
+- V1 runtime direction
 
 This is the primary reference for how the system is supposed to work.
 
@@ -37,12 +37,14 @@ Defines the full answering pipeline.
 
 Includes:
 - query analysis
+- answer policy resolution
 - scope inference (hybrid)
 - retrieval planning
 - multi-stage retrieval
 - context assembly
 - answer generation
-- answer verification
+- evidence verification
+- response evaluation
 
 This is the most critical execution document.
 Any change to runtime behavior must be reflected here.
@@ -53,9 +55,9 @@ Any change to runtime behavior must be reflected here.
 Defines all core data structures used by the Answer Engine.
 
 Includes:
-- chat session
-- messages
 - answer run
+- answer policy
+- optional chat session / message support
 - context pack
 - scope references
 - retrieval results
@@ -64,19 +66,6 @@ Use this when:
 - modifying persistence
 - working with pipeline data
 - designing API responses
-
----
-
-### `docs/API_V1.md`
-Defines the public Answer Engine API.
-
-Includes:
-- chat endpoints
-- answer execution endpoints
-- trace output format
-- request/response contracts
-
-This is the contract between frontend and backend.
 
 ---
 
@@ -101,7 +90,7 @@ Current execution anchor
 - Not a backlog.
 
 But rather:
-“What is the ONE thing we’re working on right now?”
+"What is the ONE thing we're working on right now?"
 
 ---
 
@@ -205,13 +194,13 @@ Use this to locate the correct source of truth before making changes.
 For most implementation tasks:
 
 1. `AGENTS.md`
-2. `docs/ARCHITECTURE.md`
-3. `docs/ANSWER_PIPELINE.md`
-4. `docs/PROJECT_STATE.md`
-5. `docs/NEXT_STEPS.md`
+2. `docs/DOCS_INDEX.md`
+3. `docs/ARCHITECTURE.md`
+4. `docs/ANSWER_PIPELINE.md`
+5. `docs/DOMAIN_MODEL.md`
 6. `docs/DECISIONS.md`
-7. `docs/DOMAIN_MODEL.md`
-8. `docs/API_V1.md`
+7. `docs/PROJECT_STATE.md`
+8. `docs/CURRENT_FOCUS.md`
 9. `docs/PORTABLE_RUNTIME.md`
 10. `docs/RUNTIME_OPERATIONS.md`
 11. `docs/OPERATIONS_SURFACE.md`
@@ -226,7 +215,7 @@ If resuming work:
 
 Start with:
 - `docs/PROJECT_STATE.md`
-- `docs/NEXT_STEPS.md`
+- `docs/CURRENT_FOCUS.md`
 - `docs/CHANGELOG_DEV.md`
 
 Then:
@@ -239,13 +228,12 @@ Then:
 
 When documents disagree:
 
-1. `docs/PROJECT_STATE.md` → current reality
-2. `docs/NEXT_STEPS.md` → next target
-3. `docs/DECISIONS.md` → fixed decisions
-4. `docs/ANSWER_PIPELINE.md` → runtime behavior
-5. `docs/ARCHITECTURE.md` → long-term structure
-6. `docs/API_V1.md` → external contract
-7. `docs/CHANGELOG_DEV.md` → historical context
+1. `docs/PROJECT_STATE.md` -> current reality
+2. `docs/CURRENT_FOCUS.md` -> current execution target
+3. `docs/DECISIONS.md` -> fixed decisions
+4. `docs/ANSWER_PIPELINE.md` -> runtime behavior
+5. `docs/ARCHITECTURE.md` -> long-term structure
+6. `docs/CHANGELOG_DEV.md` -> historical context
 
 ---
 

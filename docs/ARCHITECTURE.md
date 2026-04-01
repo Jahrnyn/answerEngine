@@ -1,4 +1,4 @@
-# ARCHITECTURE — Answer Engine
+# ARCHITECTURE - Answer Engine
 
 ---
 
@@ -24,6 +24,11 @@ The system transforms user queries into grounded answers through a multi-stage p
 - reasoning
 - verification
 
+V1 is run-centric, not chat-centric:
+- the primary runtime unit is `AnswerRun`
+- the primary V1 flow is one question -> one grounded answer
+- long continuous conversation handling is not a primary V1 capability
+
 ---
 
 ## 2. System Positioning
@@ -33,10 +38,10 @@ The system transforms user queries into grounded answers through a multi-stage p
 CfHEE provides:
 - knowledge storage (documents, chunks)
 - scoped retrieval
-- optional long-term memory persistence
+- long-term structured knowledge persistence
 
 Answer Engine provides:
-- interaction layer
+- run execution and interaction persistence
 - execution pipeline
 - reasoning and answer generation
 - traceability and inspection
@@ -51,9 +56,6 @@ Answer Engine provides:
 [ CfHEE (Knowledge + Memory Layer) ]
 ↓
 [ Storage + Vector DB ]
-
----
-
 
 ---
 
@@ -128,9 +130,13 @@ The system exposes:
 
 The system distinguishes:
 
-- Domain memory → CfHEE
-- Conversation memory → hybrid (Answer Engine + CfHEE optional)
-- Working memory → Answer Engine (non-persistent)
+- Domain memory -> CfHEE
+- Raw interaction persistence -> Answer Engine
+- Long-term structured knowledge promotion -> CfHEE
+- Working memory -> Answer Engine (non-persistent)
+
+Raw question/answer interactions remain the responsibility of the Answer Engine.
+Only long-term valuable structured knowledge may be promoted into CfHEE.
 
 ---
 
@@ -138,6 +144,8 @@ The system distinguishes:
 User Query
 ↓
 Query Analysis
+↓
+Answer Policy Resolution
 ↓
 Scope Inference
 ↓
@@ -149,10 +157,11 @@ Context Assembly
 ↓
 Answer Generation
 ↓
-Answer Verification
+Evidence Verification
+↓
+Response Evaluation
 ↓
 Final Response
-
 
 Each stage produces structured outputs that can be inspected.
 
@@ -171,15 +180,20 @@ Each stage produces structured outputs that can be inspected.
 
 ### 5.2 Core Components
 
-#### Session Layer
-- manages chat sessions
-- stores messages
-- tracks active context
+#### Run Layer
+- manages `AnswerRun` execution records
+- stores raw interaction history when persistence is enabled
+- keeps optional lightweight links to conversation structures
 
 #### Query Analysis Service
 - intent detection
 - query normalization
 - retrieval requirement decision
+
+#### Answer Policy Resolver
+- resolves backend/runtime answering controls
+- sets retrieval and verification defaults
+- is internal, not user-facing
 
 #### Scope Inference Service
 - candidate scope selection
@@ -194,7 +208,7 @@ Each stage produces structured outputs that can be inspected.
 #### CfHEE Client
 - communicates with CfHEE API
 - performs scoped retrieval
-- optionally writes memory
+- does not own raw interaction persistence
 
 #### Context Builder
 - selects relevant chunks
@@ -213,9 +227,8 @@ Each stage produces structured outputs that can be inspected.
 - attaches metadata
 
 #### Answer Verifier
-- checks grounding
-- checks coverage
-- detects uncertainty
+- performs evidence verification
+- performs response evaluation
 - may trigger re-run or adjustment
 
 #### Trace Service
@@ -236,28 +249,24 @@ Each stage produces structured outputs that can be inspected.
 
 ### 6.2 Layout Model
 
-Three-column layout:
+V1 layout:
 
-LEFT:
-- conversation list
-- session control
+MAIN SURFACE:
+- question input
+- grounded answer output
 
-CENTER:
-- chat interface
-- input
-- streaming responses
-
-RIGHT:
+OPTIONAL INSPECT / SIDE PANEL:
 - sources panel
 - context viewer
 - trace/debug panel
+- verification details
 
 ---
 
 ### 6.3 Key UI Concepts
 
-- chat is primary interaction
-- trace is always accessible
+- the main question/answer surface is primary in V1
+- trace is always accessible when inspection is needed
 - answers are inspectable
 - developer mode exposes deeper details
 
@@ -307,9 +316,9 @@ The system must:
 - avoid silent fallback behavior
 
 Examples:
-- no relevant context → explicit response
-- low confidence → uncertainty surfaced
-- retrieval failure → visible error
+- no relevant context -> explicit response
+- low confidence -> uncertainty surfaced
+- retrieval failure -> visible error
 
 ---
 
@@ -322,6 +331,7 @@ The system does NOT aim to:
 - orchestrate multi-agent workflows
 - automate business processes
 - replace human decision-making
+- prioritize long continuous conversation management
 
 ---
 
@@ -329,7 +339,7 @@ The system does NOT aim to:
 
 Future extensions may include:
 
-- advanced memory integration
+- advanced knowledge promotion rules
 - adaptive retrieval strategies
 - tool integration
 - partial automation layers

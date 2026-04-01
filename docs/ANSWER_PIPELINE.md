@@ -1,4 +1,4 @@
-# ANSWER_PIPELINE — Answer Engine
+# ANSWER_PIPELINE - Answer Engine
 
 ---
 
@@ -22,6 +22,8 @@ User Query
 ↓
 Query Analysis
 ↓
+Answer Policy Resolution
+↓
 Scope Inference (Hybrid)
 ↓
 Retrieval Planning
@@ -32,10 +34,11 @@ Context Assembly
 ↓
 Answer Generation
 ↓
-Answer Verification
+Evidence Verification
+↓
+Response Evaluation
 ↓
 Final Response
-
 
 Each stage:
 - receives structured input
@@ -55,7 +58,7 @@ Understand the user query and determine execution requirements.
 
 #### Inputs
 - user_query (string)
-- session_context (optional)
+- conversation_context (optional)
 
 #### Responsibilities
 - normalize query
@@ -71,38 +74,69 @@ QueryAnalysisResult:
 - requires_retrieval (bool)
 - query_variants (optional list)
 
-
 #### Notes
 - This stage MUST NOT perform retrieval
 - This stage MUST NOT modify scope
 
 ---
 
-### 3.2 Scope Inference Stage (Hybrid)
+### 3.2 Answer Policy Resolution Stage
+
+#### Purpose
+Resolve backend/runtime controls for the current run.
+
+#### Inputs
+- query_analysis_result
+- system configuration
+- route defaults (optional)
+
+#### Responsibilities
+- decide runtime answering constraints for the run
+- set retrieval limits and defaults
+- set verification strictness
+- remain internal to the backend/runtime
+
+#### Outputs
+AnswerPolicy:
+
+- retrieval_required: bool
+- max_retrieval_rounds: int
+- default_top_k: int
+- verification_profile: string
+- response_style: string
+
+#### Notes
+- `AnswerPolicy` is NOT a user-facing UI selection
+- `AnswerPolicy` must be explicit in trace
+- `AnswerPolicy` does NOT replace pipeline stages
+
+---
+
+### 3.3 Scope Inference Stage (Hybrid)
 
 #### Purpose
 Determine relevant CfHEE scope(s) without user input.
 
 ---
 
-#### Step 1 — Heuristic Filtering
+#### Step 1 - Heuristic Filtering
 
 Inputs:
 - normalized_query
-- session_context
+- conversation_context
 - available_scopes (from CfHEE)
 
 Logic:
 - keyword matching
 - scope metadata hints
-- session continuity signals
+- lightweight continuity hints when conversation context exists
 
 Output:
 - candidate_scopes (list)
 
 ---
 
-#### Step 2 — LLM-assisted Ranking
+#### Step 2 - LLM-assisted Ranking
 
 Inputs:
 - normalized_query
@@ -122,7 +156,7 @@ RankedScopes:
 
 ---
 
-#### Step 3 — Retrieval Validation
+#### Step 3 - Retrieval Validation
 
 Inputs:
 - top scopes
@@ -146,7 +180,7 @@ ValidatedScopes:
 
 ---
 
-### 3.3 Retrieval Planning Stage
+### 3.4 Retrieval Planning Stage
 
 #### Purpose
 Define how retrieval will be executed.
@@ -154,6 +188,7 @@ Define how retrieval will be executed.
 #### Inputs
 - validated_scopes
 - query_analysis_result
+- answer_policy
 
 #### Responsibilities
 - decide number of retrieval rounds
@@ -172,7 +207,7 @@ RetrievalPlan:
 
 ---
 
-### 3.4 Retrieval Execution Stage (CfHEE)
+### 3.5 Retrieval Execution Stage (CfHEE)
 
 #### Purpose
 Execute retrieval using CfHEE API.
@@ -192,10 +227,8 @@ RetrievalResult:
 - results_by_round:
 - - scope
 - - chunks
--- scores
+- - scores
 - aggregated_results
-
----
 
 #### Notes
 - Retrieval MUST be deterministic per round
@@ -203,7 +236,7 @@ RetrievalResult:
 
 ---
 
-### 3.5 Context Assembly Stage
+### 3.6 Context Assembly Stage
 
 #### Purpose
 Construct the final context for the model.
@@ -211,7 +244,7 @@ Construct the final context for the model.
 #### Inputs
 - retrieval_result
 - token_budget
-- session_context (optional)
+- answer_policy
 
 #### Responsibilities
 - deduplicate chunks
@@ -228,15 +261,13 @@ ContextPack:
 - structured_context
 - token_estimate
 
----
-
 #### Notes
 - Context must remain interpretable
 - Chunk selection must be traceable
 
 ---
 
-### 3.6 Answer Generation Stage
+### 3.7 Answer Generation Stage
 
 #### Purpose
 Generate response using model.
@@ -244,7 +275,7 @@ Generate response using model.
 #### Inputs
 - user_query
 - context_pack
-- session_memory
+- answer_policy
 - system_prompt
 
 #### Execution
@@ -259,49 +290,72 @@ AnswerResult:
 - token_usage
 - model_metadata
 
----
-
 #### Notes
 - Model provider must be abstracted
 - Prompt construction must be traceable
 
 ---
 
-### 3.7 Answer Verification Stage
+### 3.8 Evidence Verification Stage
 
 #### Purpose
-Ensure answer reliability.
+Ensure the generated answer is supported by retrieved evidence.
 
 #### Inputs
 - answer_result
 - context_pack
+- validated_scopes
 
 #### Checks
 
 ##### 1. Grounding Check
 - verify claims exist in context
 
-##### 2. Coverage Check
-- verify question is answered
-
-##### 3. Uncertainty Check
+##### 2. Uncertainty Check
 - detect unsupported claims
 
-##### 4. Scope Consistency Check
+##### 3. Scope Consistency Check
 - ensure no cross-scope contamination
 
----
-
 #### Output
-VerificationResult:
+EvidenceVerificationResult:
 
 - grounded (bool)
--coverage_ok (bool)
 - uncertainty_flags
 - scope_consistency_ok (bool)
 - requires_regeneration (bool)
 
 ---
+
+### 3.9 Response Evaluation Stage
+
+#### Purpose
+Evaluate whether the evidence-grounded answer actually satisfies the question.
+
+#### Inputs
+- user_query
+- answer_result
+- evidence_verification_result
+- answer_policy
+
+#### Checks
+
+##### 1. Coverage Check
+- verify question coverage
+
+##### 2. Response Quality Check
+- verify the response follows the intended answer shape for the run
+
+##### 3. Final Handling Decision
+- decide whether to keep the answer, mark limitations, or regenerate
+
+#### Output
+ResponseEvaluationResult:
+
+- coverage_ok (bool)
+- response_quality_ok (bool)
+- limitations: list[string]
+- requires_regeneration (bool)
 
 #### Optional Actions
 - regenerate answer
@@ -310,7 +364,7 @@ VerificationResult:
 
 ---
 
-### 3.8 Final Response Stage
+### 3.10 Final Response Stage
 
 #### Purpose
 Prepare response for UI.
@@ -334,12 +388,14 @@ AnswerRun:
 - id
 - query
 - query_analysis
+- answer_policy
 - scope_inference
 - retrieval_plan
 - retrieval_result
 - context_pack
 - answer_result
-- verification_result
+- evidence_verification_result
+- response_evaluation_result
 - timings
 - errors
 
@@ -376,52 +432,9 @@ Failures must be surfaced, not hidden.
 
 Examples:
 
-- no relevant scope → explicit response
-- empty retrieval → return "no evidence"
-- low confidence → mark answer as uncertain
-
----
-
-## 7. Extensibility Rules
-
-New features must:
-
-Trace must be:
-- complete
-- structured
-- accessible to UI
-
----
-
-## 5. Execution Rules
-
-### 5.1 Determinism
-Each stage must produce reproducible outputs given same inputs.
-
----
-
-### 5.2 No Hidden State
-All important decisions must be explicit and logged.
-
----
-
-### 5.3 No Silent Fallback
-All fallback behavior must be visible in trace.
-
----
-
-### 5.4 Fail Transparently
-Failures must be surfaced, not hidden.
-
----
-
-## 6. Failure Handling
-
-Examples:
-
-- no relevant scope → explicit response
-- empty retrieval → return "no evidence"
-- low confidence → mark answer as uncertain
+- no relevant scope -> explicit response
+- empty retrieval -> return "no evidence"
+- low confidence -> mark answer as uncertain
 
 ---
 
