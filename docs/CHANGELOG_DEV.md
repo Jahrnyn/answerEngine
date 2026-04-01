@@ -19,3 +19,4 @@
 - Refined the V1 runtime profile again to keep hybrid scope inference strong but explicitly bounded, merge verification back into one V1 stage, and make regeneration and scope-failure fallback rules explicit.
 - Updated the frontend documentation to keep V1 focused on a main question/answer surface with an optional inspect panel rather than a thread-first layout.
 - Clarified that V1 may expose run progress states but does not stream unverified final answer text to the user before post-generation verification completes.
+- Introduced stage-specific model routing as a documentation concept and aligned architecture, pipeline, domain model, decisions, and project state around centralized, configuration-driven model selection.

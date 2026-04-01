@@ -54,6 +54,7 @@ Status: NOT IMPLEMENTED
 
 - No Ollama integration
 - No model provider abstraction
+- No stage-specific model routing
 - No generation or streaming logic
 
 ---
@@ -104,6 +105,7 @@ Defined in:
 Includes:
 - AnswerRun
 - AnswerPolicy
+- StageModelConfig (conceptual)
 - VerificationResult
 - ChatSession (optional)
 - ChatMessage (optional)
@@ -171,6 +173,7 @@ The following are not yet resolved:
 - bounded scope inference thresholds
 - regeneration conditions in verification stage
 - practical latency budget targets
+- stage-specific model routing configuration
 - persistence strategy for AnswerRun
 - rules for structured knowledge promotion into CfHEE
 

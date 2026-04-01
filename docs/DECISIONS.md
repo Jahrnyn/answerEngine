@@ -288,3 +288,27 @@ Reason: V1 is designed around one run producing one grounded answer, with lightw
 ## ADR-047
 V1 does not stream unverified final answer text to the user.
 Reason: verification is post-generation, and preserving high-trust verified-output semantics is more important than immediate token streaming in V1.
+
+---
+
+## ADR-048
+V1 supports stage-specific model routing.
+Reason: different pipeline stages have different capability and latency needs, and local-first execution benefits from using different model strengths where appropriate.
+
+---
+
+## ADR-049
+Model selection must be configuration-driven and not hardcoded.
+Reason: the system should remain provider-flexible, environment-flexible, and adjustable without changing pipeline logic.
+
+---
+
+## ADR-050
+Smaller tasks may use smaller models or rule-based execution, while answer generation uses the strongest available model in the current runtime.
+Reason: this keeps V1 practical for bounded local execution without collapsing all stages into one model.
+
+---
+
+## ADR-051
+Model routing is resolved centrally rather than inside individual pipeline stages.
+Reason: centralized routing keeps model selection explicit, consistent, and separate from stage responsibilities.

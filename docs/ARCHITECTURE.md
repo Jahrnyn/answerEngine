@@ -195,6 +195,7 @@ Each stage produces structured outputs that can be inspected.
 - resolves backend/runtime answering controls
 - sets retrieval and verification defaults
 - sets bounded execution constraints for the run
+- resolves stage-specific model routing centrally
 - is internal, not user-facing
 
 #### Scope Inference Service
@@ -223,6 +224,12 @@ Each stage produces structured outputs that can be inspected.
 - abstracts LLM providers
 - supports Ollama (default)
 - allows future providers
+
+#### Stage Model Resolver
+- resolves model choice centrally per pipeline stage
+- keeps model selection configuration-driven, not hardcoded
+- may route stages to rule-based execution, smaller models, or stronger models
+- keeps stage code free from direct model selection
 
 #### Answer Generator
 - executes model calls
@@ -297,6 +304,25 @@ The system must support:
 - model metadata access
 
 In V1, provider/runtime streaming support does not imply streaming unverified final answer text to the user.
+
+---
+
+### 7.3 Stage-Specific Model Routing
+
+Model usage is stage-specific in V1.
+
+This means:
+- each pipeline stage may use a different model
+- some stages may be rule-based instead of model-driven
+- model selection is resolved centrally, not scattered across stages
+- routing must be configuration-driven, not hardcoded
+
+Typical routing intent:
+- lightweight stages may use rules or smaller models
+- ranking and verification stages may use smaller or medium-capability models
+- answer generation uses the strongest available model in the current runtime
+
+This is a routing concept, not a claim of implemented runtime behavior.
 
 ---
 

@@ -158,7 +158,24 @@ Notes:
 
 ---
 
-### 4.5 ConversationRef
+### 4.5 StageModelConfig
+
+Conceptual model routing entry.
+
+StageModelConfig:
+- stage_id: string
+- provider_id: string
+- model_id: string
+- parameters: dict (optional)
+
+Notes:
+- conceptual only
+- describes stage-specific model routing without binding implementation
+- external to core `AnswerRun` execution data
+
+---
+
+### 4.6 ConversationRef
 
 Links an `AnswerRun` to optional conversation persistence structures.
 
@@ -169,7 +186,7 @@ ConversationRef:
 
 ---
 
-### 4.6 RetrievalPlan
+### 4.7 RetrievalPlan
 
 RetrievalPlan:
 - rounds: list[RetrievalRound]
@@ -177,7 +194,7 @@ RetrievalPlan:
 
 ---
 
-### 4.7 RetrievalRound
+### 4.8 RetrievalRound
 
 RetrievalRound:
 - scope: ScopeReference
@@ -186,7 +203,7 @@ RetrievalRound:
 
 ---
 
-### 4.8 RetrievalResult
+### 4.9 RetrievalResult
 
 RetrievalResult:
 - results_by_round: list[RetrievalRoundResult]
@@ -194,7 +211,7 @@ RetrievalResult:
 
 ---
 
-### 4.9 RetrievalRoundResult
+### 4.10 RetrievalRoundResult
 
 RetrievalRoundResult:
 - scope: ScopeReference
@@ -202,7 +219,7 @@ RetrievalRoundResult:
 
 ---
 
-### 4.10 RetrievedChunk
+### 4.11 RetrievedChunk
 
 Represents a unit returned from CfHEE.
 
@@ -215,7 +232,7 @@ RetrievedChunk:
 
 ---
 
-### 4.11 ContextPack
+### 4.12 ContextPack
 
 ContextPack:
 - selected_chunks: list[RetrievedChunk]
@@ -225,7 +242,7 @@ ContextPack:
 
 ---
 
-### 4.12 SourceReference
+### 4.13 SourceReference
 
 SourceReference:
 - document_id: string
@@ -234,7 +251,7 @@ SourceReference:
 
 ---
 
-### 4.13 AnswerResult
+### 4.14 AnswerResult
 
 AnswerResult:
 - answer_text: string
@@ -243,7 +260,7 @@ AnswerResult:
 
 ---
 
-### 4.14 TokenUsage
+### 4.15 TokenUsage
 
 TokenUsage:
 - prompt_tokens: int
@@ -252,7 +269,7 @@ TokenUsage:
 
 ---
 
-### 4.15 VerificationResult
+### 4.16 VerificationResult
 
 Practical combined V1 verification result.
 
@@ -272,7 +289,7 @@ Notes:
 
 ---
 
-### 4.16 TimingInfo
+### 4.17 TimingInfo
 
 TimingInfo:
 - total_time_ms: int

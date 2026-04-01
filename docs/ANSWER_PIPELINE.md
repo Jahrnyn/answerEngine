@@ -64,6 +64,9 @@ Understand the user query and determine execution requirements.
 - determine if retrieval is required
 - optionally generate query variants
 
+Model expectation:
+- may be rule-based or use a smaller model
+
 #### Outputs
 QueryAnalysisResult:
 
@@ -77,6 +80,7 @@ QueryAnalysisResult:
 - V1 must not depend on long conversation state to answer correctly
 - This stage MUST NOT perform retrieval
 - This stage MUST NOT modify scope
+- model choice is resolved via routing policy, not by the stage itself
 
 ---
 
@@ -156,6 +160,9 @@ Logic:
 - rank scopes
 - assign confidence
 
+Model expectation:
+- uses a medium-capability model when model assistance is applied
+
 V1 execution limit:
 - maximum scopes passed into LLM ranking: 6
 
@@ -215,6 +222,7 @@ fallback must stay within:
 - Scope inference MUST NOT rely on LLM alone
 - Retrieval validation is mandatory for reliability
 - Scope inference MUST remain bounded by explicit execution limits in V1
+- model choice is resolved via routing policy, not by the stage itself
 
 ---
 
@@ -325,6 +333,9 @@ Generate response using model.
 - call model provider
 - may support runtime/provider streaming internally
 
+Model expectation:
+- uses the strongest available model in the current runtime
+
 #### Output
 AnswerResult:
 
@@ -338,6 +349,7 @@ AnswerResult:
 - verification requires a complete candidate answer
 - V1 does NOT stream unverified final answer text directly to the user
 - V1 may expose pipeline progress or status updates instead of answer-text streaming
+- model choice is resolved via routing policy, not by the stage itself
 
 ---
 
@@ -371,6 +383,9 @@ Verification runs only after a complete candidate answer exists.
 - decide whether to keep it with explicit limitations
 - decide whether one regeneration attempt is justified
 
+Model expectation:
+- uses a smaller or medium-capability model when model assistance is needed
+
 #### Output
 VerificationResult:
 
@@ -390,6 +405,9 @@ confidence_score: float (0.0–1.0)
 - maximum regeneration attempts: 1
 - regeneration is optional and controlled by `AnswerPolicy.allow_regeneration`
 - if the regenerated answer is still unacceptable, return an explicit limited, uncertain, or cannot-answer response
+
+#### Notes
+- model choice is resolved via routing policy, not by the stage itself
 
 ---
 
