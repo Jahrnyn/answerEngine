@@ -4,33 +4,32 @@
 
 ## CURRENT FOCUS
 
-Initial backend scaffold for the Answer Engine.
+Pipeline execution skeleton for the Answer Engine backend.
 
 Status:
-- minimal scaffold implemented
-- no pipeline behavior implemented
+- first structural slice implemented
+- explicit stub pipeline flow available for manual backend testing
 
 ---
 
 ## CURRENT GOAL
 
-Create a minimal FastAPI application that can start and respond to a basic health check request.
+Establish a run-centric backend execution skeleton that exercises the documented pipeline shape end to end.
 
 ---
 
 ## SCOPE
 
 Included:
-- project structure initialization
-- FastAPI app setup
-- basic routing
-- `/health` endpoint
+- `RunExecutor`
+- explicit stub pipeline stage boundaries
+- dev-oriented execution route
+- `AnswerRun`-like payload assembly
 
 Excluded:
-- pipeline implementation
-- CfHEE integration
-- model provider integration
-- domain model usage
+- real CfHEE integration
+- real retrieval logic
+- real model provider integration
 - persistence layer
 - frontend
 
@@ -38,26 +37,26 @@ Excluded:
 
 ## DONE WHEN
 
-- FastAPI server starts successfully
-- `/health` endpoint responds with a valid JSON response
-- project structure is ready for further backend development
+- backend imports successfully
+- `/health` remains working
+- pipeline skeleton can execute end to end
+- run-shaped output is inspectable
 
 ---
 
 ## NOT IN SCOPE
 
-- query processing
-- scope inference
-- retrieval logic
-- context building
-- answer generation
-- verification logic
+- real business logic
+- real scope inference
+- real retrieval logic
+- real context building logic
+- real model calls
 - UI development
 
 ---
 
 ## NOTES
 
-This step establishes the execution foundation.
+This step establishes the first real backend execution slice.
 
-No business logic or pipeline behavior should be implemented at this stage.
+Business logic remains intentionally stubbed and deterministic.

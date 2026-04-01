@@ -33,8 +33,10 @@ Status: PARTIALLY IMPLEMENTED
 
 - FastAPI application scaffold exists under `apps/backend`
 - Unversioned `GET /health` endpoint exists
+- Dev-oriented `POST /runs/execute` route exists for exercising the pipeline skeleton
 - Local editable install is defined for the backend package
-- No pipeline execution logic exists
+- Run-centric pipeline execution skeleton exists
+- Explicit stub stage boundaries exist from query analysis through final response mapping
 - No CfHEE integration is implemented
 
 ---
@@ -55,7 +57,7 @@ Status: NOT IMPLEMENTED
 - No Ollama integration
 - No model provider abstraction
 - No stage-specific model routing
-- No generation or streaming logic
+- No real generation or streaming logic
 
 ---
 
@@ -96,6 +98,11 @@ Includes:
 - Answer Generation
 - Answer Verification
 
+Current code state:
+- structural skeleton only
+- deterministic stub outputs only
+- no real retrieval, model, or CfHEE behavior
+
 ---
 
 ### 3.2 Domain Model
@@ -111,6 +118,10 @@ Includes:
 - ChatMessage (optional)
 - Retrieval structures
 - ContextPack
+
+Current code state:
+- `AnswerRun`-like execution payload assembled by the backend skeleton
+- no persistence
 
 ---
 
@@ -194,14 +205,17 @@ No production-ready behavior exists yet.
 ## 7. What DOES NOT exist yet (Important)
 
 - no answering API endpoints
-- health endpoint only
-- functioning pipeline execution
-- AnswerRun execution
-- retrieval integration
-- model inference
+- no production-ready answering API endpoints
+- no real retrieval integration
+- no real model inference
 - UI interaction
 - trace visualization
 - implemented chat/session capability
+
+The following DO exist in minimal structural form:
+- `/health`
+- dev-only pipeline execution route
+- stub `AnswerRun` execution flow
 
 Any assumption that these exist is incorrect.
 

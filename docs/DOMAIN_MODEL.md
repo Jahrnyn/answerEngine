@@ -59,6 +59,7 @@ AnswerRun:
 - context_pack: ContextPack
 - answer_result: AnswerResult
 - verification_result: VerificationResult
+- final_response: FinalResponse
 
 - conversation_ref: ConversationRef (optional)
 - timings: TimingInfo
