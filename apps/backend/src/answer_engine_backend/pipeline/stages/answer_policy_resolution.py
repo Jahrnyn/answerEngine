@@ -9,7 +9,7 @@ class AnswerPolicyResolutionStage:
         max_retrieval_rounds = 2 if retrieval_required else 0
         default_top_k = 5 if intent_type == "lookup" else 4
         allow_multi_scope = intent_type in {"lookup", "explain"} and retrieval_required
-        allow_regeneration = False
+        allow_regeneration = retrieval_required
         verification_profile = "v1_strict"
         response_style = self._resolve_response_style(intent_type)
 

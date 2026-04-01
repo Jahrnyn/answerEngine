@@ -124,6 +124,7 @@ class VerificationResult(BaseModel):
     limitations: list[str] = Field(default_factory=list)
     decision: str
     requires_regeneration: bool
+    regeneration_attempted: bool = False
     confidence_score: float
 
 

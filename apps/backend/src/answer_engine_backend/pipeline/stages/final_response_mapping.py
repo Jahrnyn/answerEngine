@@ -15,14 +15,15 @@ class FinalResponseMappingStage:
         verification_result: VerificationResult,
         source_mapping,
     ) -> FinalResponse:
-        certainty = "high" if verification_result.confidence_score >= 0.8 else "medium"
+        certainty = self._resolve_certainty(verification_result)
         inferred_scopes = []
         if scope_inference.primary_scope is not None:
             inferred_scopes.append(scope_inference.primary_scope)
         inferred_scopes.extend(scope_inference.secondary_scopes)
+        answer_text = self._resolve_answer_text(answer_result, verification_result)
 
         return FinalResponse(
-            answer_text=answer_result.answer_text,
+            answer_text=answer_text,
             sources=source_mapping,
             inferred_scopes=inferred_scopes,
             certainty=certainty,
@@ -30,7 +31,29 @@ class FinalResponseMappingStage:
             verification_summary={
                 "decision": verification_result.decision,
                 "grounded": verification_result.grounded,
+                "scope_consistency_ok": verification_result.scope_consistency_ok,
+                "coverage_ok": verification_result.coverage_ok,
+                "adequacy_ok": verification_result.adequacy_ok,
+                "regeneration_attempted": verification_result.regeneration_attempted,
                 "confidence_score": verification_result.confidence_score,
             },
             trace_id=run_id,
         )
+
+    def _resolve_certainty(self, verification_result: VerificationResult) -> str:
+        if verification_result.decision == "cannot_answer":
+            return "uncertain"
+        if verification_result.confidence_score >= 0.8:
+            return "high"
+        if verification_result.confidence_score >= 0.6:
+            return "medium"
+        return "low"
+
+    def _resolve_answer_text(
+        self,
+        answer_result: AnswerResult,
+        verification_result: VerificationResult,
+    ) -> str:
+        if verification_result.decision == "cannot_answer":
+            return "I can't answer this reliably from the available evidence."
+        return answer_result.answer_text

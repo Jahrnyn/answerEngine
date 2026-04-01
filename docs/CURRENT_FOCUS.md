@@ -4,30 +4,29 @@
 
 ## CURRENT FOCUS
 
-Answer Verification V1 for the Answer Engine backend.
+End-to-end backend stabilization for the Answer Engine backend.
 
 Status:
-- the pipeline now produces a real candidate answer with bounded grounded generation
-- the next backend step is to replace the current verification placeholder with a practical V1 implementation
+- the backend now has a practical bounded candidate-answer path through verification
+- the next backend step is to stabilize end-to-end runtime behavior and final response behavior under live local dependencies
 
 ---
 
 ## CURRENT GOAL
 
-Turn real candidate answers into a practical bounded V1 verification result while preserving verified-before-display architecture.
+Stabilize the first end-to-end bounded V1 answering path now that all core backend stages exist in practical form.
 
 ---
 
 ## SCOPE
 
 Included:
-- grounded post-generation verification behavior
-- explicit keep/limit/cannot-answer decision handling
-- inspectable verification-result metadata
-- preserving verified-before-display architecture
+- live dependency re-checks across CfHEE and Ollama
+- tightening final response behavior where runtime truthfulness needs it
+- reducing instability in the dev execution path
 
 Excluded:
-- answer generation redesign
+- major pipeline redesign
 - persistence layer
 - frontend
 
@@ -38,18 +37,18 @@ Excluded:
 - backend imports successfully
 - `/health` remains working
 - `/runs/execute` remains working
-- verification produces meaningful non-stub decision output
-- verification behavior remains deterministic and traceable
+- the full backend path is stable under the local development environment
+- remaining failures are explicit and traceable rather than hidden
 
----
+--- 
 
 ## NOT IN SCOPE
 
 - persistence
 - frontend development
 
----
+--- 
 
 ## NOTES
 
-This step should convert the verification stage from a structural placeholder into a practical bounded V1 post-generation check.
+This step should build confidence in the completed bounded V1 backend path before broader surface work begins.

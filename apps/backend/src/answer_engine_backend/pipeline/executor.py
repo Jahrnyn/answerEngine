@@ -23,7 +23,9 @@ class RunExecutor:
         self.retrieval_execution_stage = RetrievalExecutionStage()
         self.context_assembly_stage = ContextAssemblyStage()
         self.answer_generation_stage = AnswerGenerationStage()
-        self.answer_verification_stage = AnswerVerificationStage()
+        self.answer_verification_stage = AnswerVerificationStage(
+            answer_generation_stage=self.answer_generation_stage
+        )
         self.final_response_mapping_stage = FinalResponseMappingStage()
 
     def execute(self, query: str) -> AnswerRun:
@@ -44,6 +46,14 @@ class RunExecutor:
                 if config.stage_id == "answer_generation"
             ),
             self.stage_model_resolver.resolve("answer_generation"),
+        )
+        answer_verification_model = next(
+            (
+                config
+                for config in stage_model_routing
+                if config.stage_id == "answer_verification"
+            ),
+            self.stage_model_resolver.resolve("answer_verification"),
         )
 
         timer.start_stage()
@@ -90,11 +100,17 @@ class RunExecutor:
         timer.end_stage("answer_generation")
 
         timer.start_stage()
-        verification_result = self.answer_verification_stage.execute(
+        verification_outcome = self.answer_verification_stage.execute(
+            query_analysis.normalized_query,
             answer_result,
             context_pack,
+            scope_inference,
             answer_policy,
+            answer_verification_model,
+            answer_generation_model,
         )
+        answer_result = verification_outcome.answer_result
+        verification_result = verification_outcome.verification_result
         timer.end_stage("answer_verification")
 
         timer.start_stage()

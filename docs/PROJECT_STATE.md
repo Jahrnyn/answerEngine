@@ -42,7 +42,8 @@ Status: PARTIALLY IMPLEMENTED
 - Practical bounded V1 retrieval planning and CfHEE-backed retrieval execution exist
 - Practical bounded V1 context assembly exists with deterministic chunk selection and explicit minimal empty-context handling
 - Practical V1 answer generation exists with a simple grounded prompt path and local Ollama runtime integration
-- Explicit stub stage boundaries remain from answer verification through final response mapping
+- Practical V1 answer verification exists with combined bounded evaluation and at-most-one regeneration handling
+- Explicit stub stage boundaries remain in the final response mapping layer only
 - Thin CfHEE client foundation exists
 - Central stage model resolver skeleton exists
 
@@ -62,9 +63,11 @@ Status: NOT IMPLEMENTED
 Status: PARTIALLY IMPLEMENTED
 
 - Local Ollama-backed answer generation exists
+- Local Ollama-backed verification assistance exists
 - No broad model provider abstraction
 - Stage-specific model routing skeleton exists with config-driven defaults and inspectable run output
 - Central stage routing is consumed for answer generation
+- Central stage routing is consumed for answer verification
 - Current local development defaults are explicitly aligned to:
 - `query_analysis` -> rule-based first with optional `qwen2.5:1.5b` fallback intent
 - `scope_inference_ranking` -> `qwen2.5:3b`
@@ -124,7 +127,8 @@ Current code state:
 - Context Assembly uses deterministic dedupe, bounded selection, inspectable structured context formatting, and approximate token estimation
 - CfHEE client can resolve the effective API base URL from the configured local CfHEE host when that host serves the workbench UI
 - Answer Generation uses a simple grounded prompt path with the local model runtime and explicit failure surfacing
-- later answer stages remain structural from verification onward
+- Answer Verification uses combined bounded rule checks, model-assisted evaluation when available, and at-most-one explicit regeneration
+- final response mapping remains structurally simple
 
 ---
 
@@ -234,7 +238,7 @@ No production-ready behavior exists yet.
 
 - no answering API endpoints
 - no production-ready answering API endpoints
-- no verified answer pipeline yet
+- no fully verified live end-to-end answer pipeline yet
 - UI interaction
 - trace visualization
 - implemented chat/session capability
@@ -253,6 +257,7 @@ The following DO exist in minimal structural form:
 - bounded retrieval planning and CfHEE-backed retrieval execution
 - bounded context assembly with inspectable structured context output
 - practical V1 answer generation with central stage routing and local Ollama runtime integration
+- practical V1 answer verification with bounded combined evaluation and explicit regeneration trace visibility
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -264,6 +269,8 @@ The following have been verified against the current live local CfHEE setup:
 - live answer generation has been re-checked successfully for at least one real query path (`bechtle crm`)
 - the local Ollama runtime has been re-checked and currently includes `qwen2.5:1.5b`, `qwen2.5:3b`, and `qwen2.5:7b`
 - centralized stage routing has been re-checked and currently resolves `answer_generation` to `qwen2.5:7b`
+- live end-to-end `/runs/execute` remained intermittently blocked in this round by upstream CfHEE retrieval timeouts before verification could complete
+- controlled local verification runs now produce real non-placeholder `verification_result` output, including explicit keep, regenerate, and cannot-answer style outcomes
 
 Any assumption that these exist is incorrect.
 

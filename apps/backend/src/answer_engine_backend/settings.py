@@ -55,6 +55,8 @@ def get_settings() -> BackendSettings:
     )
     answer_generation_temperature = getenv("ANSWER_ENGINE_ANSWER_GENERATION_TEMPERATURE", "0")
     answer_generation_max_tokens = getenv("ANSWER_ENGINE_ANSWER_GENERATION_MAX_TOKENS", "256")
+    answer_verification_temperature = getenv("ANSWER_ENGINE_ANSWER_VERIFICATION_TEMPERATURE", "0")
+    answer_verification_max_tokens = getenv("ANSWER_ENGINE_ANSWER_VERIFICATION_MAX_TOKENS", "256")
 
     stage_routing_defaults = {
         "query_analysis": StageRoutingDefault(
@@ -89,7 +91,12 @@ def get_settings() -> BackendSettings:
             stage_id="answer_verification",
             provider_id="ollama",
             model_id=answer_verification_model_id,
-            parameters={"routing_mode": "model", "capability_tier": "small_or_medium"},
+            parameters={
+                "routing_mode": "model",
+                "capability_tier": "small_or_medium",
+                "temperature": answer_verification_temperature,
+                "num_predict": answer_verification_max_tokens,
+            },
         ),
     }
 

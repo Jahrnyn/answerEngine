@@ -432,6 +432,9 @@ confidence_score: float (0.0–1.0)
 
 #### Notes
 - model choice is resolved via routing policy, not by the stage itself
+- the current backend slice uses combined practical V1 verification with conservative rule checks plus local model-assisted evaluation when available
+- the current backend slice may fall back to explicit rule-based verification if model-assisted verification is unavailable or returns unusable output
+- the current backend slice allows at most one explicit regeneration pass and records whether regeneration happened in trace data
 
 ---
 

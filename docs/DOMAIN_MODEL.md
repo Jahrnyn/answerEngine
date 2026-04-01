@@ -70,6 +70,7 @@ Notes:
 - `AnswerRun` remains the primary V1 execution entity
 - optional conversation support may link to a run but is not the primary reasoning substrate
 - stage model routing may be attached for execution inspectability without embedding provider execution logic into stage code
+- `answer_result` may reflect one bounded regenerated candidate when V1 verification performs an allowed retry
 
 ---
 
@@ -312,6 +313,7 @@ VerificationResult:
 - limitations: list[string]
 - decision: "keep" | "limit" | "regenerate" | "cannot_answer"
 - requires_regeneration: bool
+- regeneration_attempted: bool
 
 Notes:
 - combines evidence and response checks into one V1 structure
