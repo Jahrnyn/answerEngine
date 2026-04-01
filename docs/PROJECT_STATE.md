@@ -34,10 +34,11 @@ Status: PARTIALLY IMPLEMENTED
 - FastAPI application scaffold exists under `apps/backend`
 - Unversioned `GET /health` endpoint exists
 - Dev-oriented `POST /runs/execute` route exists for exercising the pipeline skeleton
+- Dev-oriented CfHEE verification routes exist under `/cfhee/*`
 - Local editable install is defined for the backend package
 - Run-centric pipeline execution skeleton exists
 - Explicit stub stage boundaries exist from query analysis through final response mapping
-- No CfHEE integration is implemented
+- Thin CfHEE client foundation exists
 
 ---
 
@@ -71,11 +72,15 @@ Status: NOT IMPLEMENTED
 ---
 
 ### 2.5 CfHEE Integration
-Status: NOT IMPLEMENTED
+Status: PARTIALLY IMPLEMENTED
 
-- No API client
-- No retrieval calls
-- No scope fetching
+- Thin API client exists
+- Config-driven CfHEE base URL handling exists
+- Health and capabilities access exists
+- Scope helper access exists
+- Retrieval wrapper skeleton exists
+- Dev-oriented backend verification routes exist
+- No pipeline integration exists
 - No knowledge promotion behavior
 
 ---
@@ -102,6 +107,7 @@ Current code state:
 - structural skeleton only
 - deterministic stub outputs only
 - no real retrieval, model, or CfHEE behavior
+- pipeline stages are not yet wired to the CfHEE client
 
 ---
 
@@ -134,6 +140,10 @@ Includes:
 - backend services
 - frontend structure
 - execution model
+
+Current code state:
+- explicit pipeline skeleton
+- explicit external CfHEE client layer
 
 ---
 
@@ -185,6 +195,7 @@ The following are not yet resolved:
 - regeneration conditions in verification stage
 - practical latency budget targets
 - stage-specific model routing configuration
+- pipeline integration strategy for the CfHEE client
 - persistence strategy for AnswerRun
 - rules for structured knowledge promotion into CfHEE
 
@@ -211,11 +222,14 @@ No production-ready behavior exists yet.
 - UI interaction
 - trace visualization
 - implemented chat/session capability
+- pipeline stages using real CfHEE data
 
 The following DO exist in minimal structural form:
 - `/health`
 - dev-only pipeline execution route
+- dev-only CfHEE verification routes
 - stub `AnswerRun` execution flow
+- thin CfHEE client foundation
 
 Any assumption that these exist is incorrect.
 

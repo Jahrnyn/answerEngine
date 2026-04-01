@@ -4,31 +4,34 @@
 
 ## CURRENT FOCUS
 
-Pipeline execution skeleton for the Answer Engine backend.
+CfHEE integration foundation for the Answer Engine backend.
 
 Status:
-- first structural slice implemented
-- explicit stub pipeline flow available for manual backend testing
+- thin client foundation implemented
+- dev-oriented CfHEE verification surface available
 
 ---
 
 ## CURRENT GOAL
 
-Establish a run-centric backend execution skeleton that exercises the documented pipeline shape end to end.
+Establish a thin, explicit client layer for CfHEE as an external dependency without integrating real pipeline behavior yet.
 
 ---
 
 ## SCOPE
 
 Included:
-- `RunExecutor`
-- explicit stub pipeline stage boundaries
-- dev-oriented execution route
-- `AnswerRun`-like payload assembly
+- config-driven CfHEE base URL handling
+- thin CfHEE client wrappers
+- health/capabilities access
+- scope helper access
+- retrieval wrapper skeleton
+- dev-oriented verification routes
 
 Excluded:
-- real CfHEE integration
-- real retrieval logic
+- real pipeline integration
+- real scope inference logic
+- real retrieval orchestration logic
 - real model provider integration
 - persistence layer
 - frontend
@@ -39,8 +42,8 @@ Excluded:
 
 - backend imports successfully
 - `/health` remains working
-- pipeline skeleton can execute end to end
-- run-shaped output is inspectable
+- CfHEE routes are registered
+- dependency failure is explicit when CfHEE is unavailable
 
 ---
 
@@ -48,7 +51,7 @@ Excluded:
 
 - real business logic
 - real scope inference
-- real retrieval logic
+- real retrieval orchestration
 - real context building logic
 - real model calls
 - UI development
@@ -57,6 +60,6 @@ Excluded:
 
 ## NOTES
 
-This step establishes the first real backend execution slice.
+This step establishes the external dependency foundation for CfHEE.
 
-Business logic remains intentionally stubbed and deterministic.
+The run pipeline skeleton remains separate and intentionally stubbed.

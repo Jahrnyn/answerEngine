@@ -76,3 +76,19 @@ The intended startup order is:
 7. start frontend
 
 If step 2 fails, the startup must stop.
+
+---
+
+## 7. Developer verification routes
+
+The backend may expose narrow developer-oriented routes for checking local integration surfaces.
+
+Current examples:
+- `GET /cfhee/health`
+- `GET /cfhee/capabilities`
+- `GET /cfhee/scopes/values`
+- `GET /cfhee/scopes/tree`
+- `POST /cfhee/retrieval/query`
+
+These routes are intended for local verification only.
+They do not imply that the full answer pipeline is already integrated with CfHEE.
