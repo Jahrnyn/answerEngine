@@ -109,6 +109,30 @@ class ScopeInferenceStage:
                     if isinstance(value, str) and value.strip():
                         next_context[key] = value.strip()
 
+                handled_plural_keys = {
+                    "workspaces",
+                    "domains",
+                    "projects",
+                    "clients",
+                    "modules",
+                }
+                for plural_key, singular_key in (
+                    ("workspaces", "workspace"),
+                    ("domains", "domain"),
+                    ("projects", "project"),
+                    ("clients", "client"),
+                    ("modules", "module"),
+                ):
+                    nested_values = node.get(plural_key)
+                    if isinstance(nested_values, list):
+                        for item in nested_values:
+                            child_context = dict(next_context)
+                            if isinstance(item, dict):
+                                raw_name = item.get("name")
+                                if isinstance(raw_name, str) and raw_name.strip():
+                                    child_context[singular_key] = raw_name.strip()
+                            visit(item, child_context)
+
                 if next_context.get("workspace") and next_context.get("domain"):
                     scope = ScopeReference(
                         workspace=next_context["workspace"] or "",
@@ -122,7 +146,9 @@ class ScopeInferenceStage:
                         collected.append(scope)
                         seen.add(scope_id)
 
-                for value in node.values():
+                for key, value in node.items():
+                    if key in handled_plural_keys:
+                        continue
                     if isinstance(value, (dict, list)):
                         visit(value, next_context)
 

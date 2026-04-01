@@ -214,7 +214,7 @@ Reason: service reachability alone is insufficient; the Answer Engine depends on
 ---
 
 ## ADR-035
-Default CfHEE base URL for local development is `http://127.0.0.1:8770`.
+Default CfHEE base URL for local development is `http://127.0.0.1:4210`.
 Reason: the Answer Engine should use a stable, non-casual local integration target and avoid common default ports.
 
 ---

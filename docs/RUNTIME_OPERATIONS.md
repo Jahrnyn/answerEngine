@@ -29,7 +29,7 @@ Default local development ports are:
 
 - Answer Engine frontend: `8760`
 - Answer Engine backend: `8761`
-- CfHEE runtime: `8770` (expected upstream dependency)
+- CfHEE runtime: `4210` (expected upstream dependency)
 
 These ports are intentionally non-default to reduce conflicts with other local projects.
 
@@ -46,7 +46,11 @@ The startup script must verify:
 
 Default expected base URL:
 
-- `http://127.0.0.1:8770`
+- `http://127.0.0.1:4210`
+
+Current local note:
+- the configured CfHEE base URL may be a workbench/UI host
+- the backend and local startup script may resolve the effective CfHEE API base URL from `runtime-config.js` when that host exposes the API separately
 
 If CfHEE is unavailable or does not expose the required capabilities, the Answer Engine development startup must fail.
 

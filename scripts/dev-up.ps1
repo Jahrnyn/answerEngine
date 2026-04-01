@@ -3,7 +3,7 @@
 param(
     [int]$BackendPort = 8761,
     [int]$FrontendPort = 8760,
-    [string]$CfheeBaseUrl = "http://127.0.0.1:8770"
+    [string]$CfheeBaseUrl = "http://127.0.0.1:4210"
 )
 
 Set-StrictMode -Version Latest
@@ -28,8 +28,9 @@ $FrontendLockFile = Join-Path $FrontendDir "package-lock.json"
 $FrontendNodeModules = Join-Path $FrontendDir "node_modules"
 $FrontendDepsMarker = Join-Path $FrontendNodeModules ".deps-installed"
 
-$CfheeHealthUrl = "$($CfheeBaseUrl.TrimEnd('/'))/api/v1/health"
-$CfheeCapabilitiesUrl = "$($CfheeBaseUrl.TrimEnd('/'))/api/v1/capabilities"
+$ResolvedCfheeBaseUrl = $null
+$CfheeHealthUrl = $null
+$CfheeCapabilitiesUrl = $null
 
 function Write-Step {
     param([string]$Message)
@@ -175,6 +176,24 @@ function Get-CfheeJson {
     }
 }
 
+function Resolve-CfheeApiBaseUrl {
+    param([string]$BaseUrl)
+
+    $trimmedBaseUrl = $BaseUrl.TrimEnd("/")
+    $runtimeConfigUrl = "$trimmedBaseUrl/runtime-config.js"
+
+    try {
+        $runtimeConfig = Invoke-WebRequest -Uri $runtimeConfigUrl -UseBasicParsing -TimeoutSec 5
+        if ($runtimeConfig.Content -match 'apiBaseUrl:\s*"([^"]+)"') {
+            return $Matches[1].TrimEnd("/")
+        }
+    }
+    catch {
+    }
+
+    return $trimmedBaseUrl
+}
+
 function Test-CfheeCapabilities {
     param($CapabilitiesResponse)
 
@@ -229,6 +248,10 @@ if (-not (Test-Path $FrontendDir)) {
 }
 
 Write-Step "Verifying CfHEE dependency"
+
+$ResolvedCfheeBaseUrl = Resolve-CfheeApiBaseUrl -BaseUrl $CfheeBaseUrl
+$CfheeHealthUrl = "$ResolvedCfheeBaseUrl/api/v1/health"
+$CfheeCapabilitiesUrl = "$ResolvedCfheeBaseUrl/api/v1/capabilities"
 
 if (-not (Test-HttpEndpoint -Url $CfheeHealthUrl)) {
     Fail "CfHEE is not reachable at '$CfheeHealthUrl'. Start CfHEE first before starting Answer Engine."
