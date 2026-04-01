@@ -112,7 +112,7 @@ class ContextPack(BaseModel):
 class AnswerResult(BaseModel):
     answer_text: str
     token_usage: dict[str, int] = Field(default_factory=dict)
-    model_metadata: dict[str, str] = Field(default_factory=dict)
+    model_metadata: dict[str, str | int | bool] = Field(default_factory=dict)
 
 
 class VerificationResult(BaseModel):

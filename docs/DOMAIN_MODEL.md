@@ -278,7 +278,11 @@ SourceReference:
 AnswerResult:
 - answer_text: string
 - token_usage: TokenUsage
-- model_metadata: dict
+- model_metadata: dict[string -> string | int | bool]
+
+Notes:
+- `model_metadata` may include provider, resolved model, routing, and prompt/context inspection fields
+- `AnswerResult` represents a candidate answer before V1 verification decides whether it may be shown as final output
 
 ---
 
@@ -288,6 +292,10 @@ TokenUsage:
 - prompt_tokens: int
 - completion_tokens: int
 - total_tokens: int
+
+Notes:
+- token counts may come directly from the runtime when available
+- V1 may use approximate counts only when the runtime does not expose exact values
 
 ---
 

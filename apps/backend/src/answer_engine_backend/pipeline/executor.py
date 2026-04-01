@@ -37,6 +37,14 @@ class RunExecutor:
                 "answer_verification",
             ]
         )
+        answer_generation_model = next(
+            (
+                config
+                for config in stage_model_routing
+                if config.stage_id == "answer_generation"
+            ),
+            self.stage_model_resolver.resolve("answer_generation"),
+        )
 
         timer.start_stage()
         query_analysis = self.query_analysis_stage.execute(query)
@@ -77,6 +85,7 @@ class RunExecutor:
             query_analysis.normalized_query,
             context_pack,
             answer_policy,
+            answer_generation_model,
         )
         timer.end_stage("answer_generation")
 

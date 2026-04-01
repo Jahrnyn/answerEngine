@@ -41,7 +41,8 @@ Status: PARTIALLY IMPLEMENTED
 - Practical bounded V1 scope inference exists with deterministic filtering and CfHEE-backed validation
 - Practical bounded V1 retrieval planning and CfHEE-backed retrieval execution exist
 - Practical bounded V1 context assembly exists with deterministic chunk selection and explicit minimal empty-context handling
-- Explicit stub stage boundaries exist from answer generation through final response mapping
+- Practical V1 answer generation exists with a simple grounded prompt path and local Ollama runtime integration
+- Explicit stub stage boundaries remain from answer verification through final response mapping
 - Thin CfHEE client foundation exists
 - Central stage model resolver skeleton exists
 
@@ -60,10 +61,11 @@ Status: NOT IMPLEMENTED
 ### 2.3 Model Integration
 Status: PARTIALLY IMPLEMENTED
 
-- No Ollama integration
-- No model provider abstraction
+- Local Ollama-backed answer generation exists
+- No broad model provider abstraction
 - Stage-specific model routing skeleton exists with config-driven defaults and inspectable run output
-- No real generation or streaming logic
+- Central stage routing is consumed for answer generation
+- No user-visible streaming logic
 
 ---
 
@@ -116,8 +118,8 @@ Current code state:
 - Retrieval Execution uses CfHEE-backed execution with explicit per-round and aggregated results
 - Context Assembly uses deterministic dedupe, bounded selection, inspectable structured context formatting, and approximate token estimation
 - CfHEE client can resolve the effective API base URL from the configured local CfHEE host when that host serves the workbench UI
-- no real model behavior inside the pipeline
-- later answer stages remain structural stub outputs
+- Answer Generation uses a simple grounded prompt path with the local model runtime and explicit failure surfacing
+- later answer stages remain structural from verification onward
 
 ---
 
@@ -227,12 +229,11 @@ No production-ready behavior exists yet.
 
 - no answering API endpoints
 - no production-ready answering API endpoints
-- no context-grounded answer generation pipeline yet
-- no real model inference
+- no verified answer pipeline yet
 - UI interaction
 - trace visualization
 - implemented chat/session capability
-- pipeline stages beyond retrieval execution using real CfHEE data
+- answer verification beyond stub behavior
 
 The following DO exist in minimal structural form:
 - `/health`
@@ -246,6 +247,7 @@ The following DO exist in minimal structural form:
 - bounded scope inference using CfHEE scope visibility and validation probes
 - bounded retrieval planning and CfHEE-backed retrieval execution
 - bounded context assembly with inspectable structured context output
+- practical V1 answer generation with central stage routing and local Ollama runtime integration
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -254,6 +256,7 @@ The following have been verified against the current live local CfHEE setup:
 - live health, capabilities, scope values, scope tree, developer verification routes, and scoped retrieval calls have been re-checked
 - live pipeline execution has been re-checked successfully for at least one real query path (`bechtle crm`)
 - live context assembly has been re-checked successfully for at least one real query path (`bechtle crm`)
+- live answer generation has been re-checked successfully for at least one real query path (`bechtle crm`)
 
 Any assumption that these exist is incorrect.
 

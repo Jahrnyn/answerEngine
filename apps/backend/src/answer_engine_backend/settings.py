@@ -17,6 +17,7 @@ class StageRoutingDefault:
 class BackendSettings:
     cfhee_base_url: str = "http://127.0.0.1:4210"
     cfhee_timeout_seconds: float = 5.0
+    ollama_base_url: str = "http://127.0.0.1:11434"
     stage_routing_defaults: dict[str, StageRoutingDefault] | None = None
 
 
@@ -31,6 +32,17 @@ def get_settings() -> BackendSettings:
         timeout_seconds = float(timeout_raw)
     except ValueError:
         timeout_seconds = BackendSettings.cfhee_timeout_seconds
+
+    ollama_base_url = getenv(
+        "ANSWER_ENGINE_OLLAMA_BASE_URL",
+        getenv("OLLAMA_BASE_URL", BackendSettings.ollama_base_url),
+    )
+    answer_generation_model_id = getenv(
+        "ANSWER_ENGINE_ANSWER_GENERATION_MODEL",
+        "strongest_available_default",
+    )
+    answer_generation_temperature = getenv("ANSWER_ENGINE_ANSWER_GENERATION_TEMPERATURE", "0")
+    answer_generation_max_tokens = getenv("ANSWER_ENGINE_ANSWER_GENERATION_MAX_TOKENS", "256")
 
     stage_routing_defaults = {
         "query_analysis": StageRoutingDefault(
@@ -47,11 +59,13 @@ def get_settings() -> BackendSettings:
         ),
         "answer_generation": StageRoutingDefault(
             stage_id="answer_generation",
-            provider_id="runtime",
-            model_id="strongest_available_default",
+            provider_id="ollama",
+            model_id=answer_generation_model_id,
             parameters={
                 "routing_mode": "model",
                 "capability_tier": "strongest_available",
+                "temperature": answer_generation_temperature,
+                "num_predict": answer_generation_max_tokens,
             },
         ),
         "answer_verification": StageRoutingDefault(
@@ -65,5 +79,6 @@ def get_settings() -> BackendSettings:
     return BackendSettings(
         cfhee_base_url=base_url.rstrip("/"),
         cfhee_timeout_seconds=timeout_seconds,
+        ollama_base_url=ollama_base_url.rstrip("/"),
         stage_routing_defaults=stage_routing_defaults,
     )

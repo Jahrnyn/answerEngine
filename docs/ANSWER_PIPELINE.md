@@ -358,6 +358,9 @@ AnswerResult:
 - V1 does NOT stream unverified final answer text directly to the user
 - V1 may expose pipeline progress or status updates instead of answer-text streaming
 - model choice is resolved via routing policy, not by the stage itself
+- the current backend slice uses a simple grounded prompt built from the normalized query, structured context, and answer policy
+- the current backend slice uses the central stage model resolver plus local Ollama runtime integration for candidate answer generation
+- `token_usage` may use provider counts when exposed by the runtime and fall back to approximation only when exact counts are unavailable
 
 ---
 

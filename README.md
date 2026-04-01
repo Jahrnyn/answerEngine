@@ -91,22 +91,19 @@ Important boundary:
 ---
 
 ## Architecture (High-level)
-Frontend (Angular)
-↓
-Answer Engine (FastAPI backend)
-↓
-CfHEE (knowledge infrastructure)
+
+Frontend (Angular) → Answer Engine (FastAPI backend) →CfHEE (knowledge infrastructure)
 
 Backend pipeline:
 RunExecutor
-→ Query Analysis
-→ Answer Policy
-→ Scope Inference
-→ Retrieval
-→ Context Assembly
-→ Answer Generation
-→ Verification
-→ Final Response
+- Query Analysis
+- Answer Policy
+- Scope Inference
+- Retrieval
+- Context Assembly
+- Answer Generation
+- Verification
+- Final Response
 
 ---
 
