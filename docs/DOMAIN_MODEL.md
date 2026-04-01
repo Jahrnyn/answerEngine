@@ -258,6 +258,10 @@ ContextPack:
 - structured_context: string
 - token_estimate: int
 
+Notes:
+- V1 `token_estimate` may be approximate rather than tokenizer-exact
+- V1 may return an explicit minimal context string when retrieval produced no usable evidence
+
 ---
 
 ### 4.13 SourceReference

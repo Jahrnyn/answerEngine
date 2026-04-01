@@ -4,30 +4,29 @@
 
 ## CURRENT FOCUS
 
-Context Assembly V1 for the Answer Engine backend.
+Answer Generation V1 for the Answer Engine backend.
 
 Status:
-- the first half of the pipeline now produces bounded, traceable retrieval outputs
-- the next backend step is to turn retrieval results into a practical structured context pack
+- the pipeline now produces bounded, inspectable context packs
+- the next backend step is to replace the current answer-generation placeholder with a practical V1 implementation
 
 ---
 
 ## CURRENT GOAL
 
-Turn real retrieval results into a bounded, inspectable context pack while keeping answer generation and verification skeletal.
+Turn real `ContextPack` output into a practical V1 candidate answer while keeping verification skeletal.
 
 ---
 
 ## SCOPE
 
 Included:
-- practical chunk selection
-- deterministic source mapping
-- bounded structured context assembly
-- inspectable context-pack output
+- practical answer prompt assembly
+- grounded candidate-answer generation behavior
+- explicit answer-result metadata
+- preserving verified-before-display architecture
 
 Excluded:
-- answer generation implementation
 - answer verification implementation
 - persistence layer
 - frontend
@@ -39,8 +38,8 @@ Excluded:
 - backend imports successfully
 - `/health` remains working
 - `/runs/execute` remains working
-- context assembly produces meaningful non-stub output
-- context-pack behavior remains deterministic and traceable
+- answer generation produces meaningful non-stub candidate output
+- answer-result behavior remains deterministic and traceable
 
 ---
 
@@ -54,4 +53,4 @@ Excluded:
 
 ## NOTES
 
-This step should convert the next pipeline stage from a structural placeholder into a practical bounded V1 context-building path.
+This step should convert the next pipeline stage from a structural placeholder into a practical bounded V1 answer-generation path.

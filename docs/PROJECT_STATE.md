@@ -40,7 +40,8 @@ Status: PARTIALLY IMPLEMENTED
 - Practical deterministic V1 logic exists for Query Analysis and Answer Policy Resolution
 - Practical bounded V1 scope inference exists with deterministic filtering and CfHEE-backed validation
 - Practical bounded V1 retrieval planning and CfHEE-backed retrieval execution exist
-- Explicit stub stage boundaries exist from context assembly through final response mapping
+- Practical bounded V1 context assembly exists with deterministic chunk selection and explicit minimal empty-context handling
+- Explicit stub stage boundaries exist from answer generation through final response mapping
 - Thin CfHEE client foundation exists
 - Central stage model resolver skeleton exists
 
@@ -113,9 +114,10 @@ Current code state:
 - Scope Inference uses bounded deterministic candidate filtering and CfHEE-backed retrieval validation
 - Retrieval Planning uses bounded validated-scope planning
 - Retrieval Execution uses CfHEE-backed execution with explicit per-round and aggregated results
+- Context Assembly uses deterministic dedupe, bounded selection, inspectable structured context formatting, and approximate token estimation
 - CfHEE client can resolve the effective API base URL from the configured local CfHEE host when that host serves the workbench UI
 - no real model behavior inside the pipeline
-- later context assembly and answer stages remain structural stub outputs
+- later answer stages remain structural stub outputs
 
 ---
 
@@ -243,6 +245,7 @@ The following DO exist in minimal structural form:
 - stage model resolver skeleton with deterministic routing defaults
 - bounded scope inference using CfHEE scope visibility and validation probes
 - bounded retrieval planning and CfHEE-backed retrieval execution
+- bounded context assembly with inspectable structured context output
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -250,6 +253,7 @@ The following have been verified against the current live local CfHEE setup:
 - the backend now resolves the effective live API base URL from that runtime config for CfHEE-dependent requests
 - live health, capabilities, scope values, scope tree, developer verification routes, and scoped retrieval calls have been re-checked
 - live pipeline execution has been re-checked successfully for at least one real query path (`bechtle crm`)
+- live context assembly has been re-checked successfully for at least one real query path (`bechtle crm`)
 
 Any assumption that these exist is incorrect.
 

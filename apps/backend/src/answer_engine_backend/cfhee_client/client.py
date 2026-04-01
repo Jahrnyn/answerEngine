@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import socket
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -102,6 +103,18 @@ class CfheeClient:
                 status_code=503,
                 endpoint=path,
             ) from error
+        except TimeoutError as error:
+            raise CfheeClientError(
+                message="CfHEE request timed out.",
+                status_code=504,
+                endpoint=path,
+            ) from error
+        except socket.timeout as error:
+            raise CfheeClientError(
+                message="CfHEE request timed out.",
+                status_code=504,
+                endpoint=path,
+            ) from error
         except json.JSONDecodeError as error:
             raise CfheeClientError(
                 message="CfHEE returned invalid JSON.",
@@ -132,6 +145,18 @@ class CfheeClient:
             raise CfheeClientError(
                 message=f"CfHEE runtime config request failed: {error.reason}",
                 status_code=503,
+                endpoint=runtime_config_path,
+            ) from error
+        except TimeoutError as error:
+            raise CfheeClientError(
+                message="CfHEE runtime config request timed out.",
+                status_code=504,
+                endpoint=runtime_config_path,
+            ) from error
+        except socket.timeout as error:
+            raise CfheeClientError(
+                message="CfHEE runtime config request timed out.",
+                status_code=504,
                 endpoint=runtime_config_path,
             ) from error
 

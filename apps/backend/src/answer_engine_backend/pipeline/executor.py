@@ -66,7 +66,10 @@ class RunExecutor:
         timer.end_stage("retrieval_execution")
 
         timer.start_stage()
-        context_pack = self.context_assembly_stage.execute(retrieval_result)
+        context_pack = self.context_assembly_stage.execute(
+            retrieval_result,
+            answer_policy,
+        )
         timer.end_stage("context_assembly")
 
         timer.start_stage()

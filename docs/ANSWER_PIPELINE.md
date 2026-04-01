@@ -321,6 +321,7 @@ ContextPack:
 #### Notes
 - Context must remain interpretable
 - Chunk selection must be traceable
+- the current backend slice deduplicates by stable chunk identity, applies deterministic bounded truncation, and returns an explicit minimal context when retrieval is empty or skipped
 
 ---
 
