@@ -150,9 +150,10 @@ class RunExecutor:
             message="Scope inference completed.",
             summary={
                 "status": scope_inference.status,
+                "primary_scope": self._scope_label(scope_inference.primary_scope),
                 "fallback_applied": scope_inference.fallback_applied,
-                "candidate_count": len(scope_inference.candidate_scopes),
-                "secondary_scope_count": len(scope_inference.secondary_scopes),
+                "retained_secondary_scope_count": len(scope_inference.secondary_scopes),
+                "failure_reason": scope_inference.failure_reason,
             },
         )
 
@@ -197,7 +198,8 @@ class RunExecutor:
             summary={
                 "status": retrieval_result.status,
                 "executed_rounds": len(retrieval_result.results_by_round),
-                "aggregated_results": len(retrieval_result.aggregated_results),
+                "aggregated_result_count": len(retrieval_result.aggregated_results),
+                "failure_reason": retrieval_result.failure_reason,
             },
         )
 
@@ -217,8 +219,9 @@ class RunExecutor:
             stage_id="context_assembly",
             message="Context assembly completed.",
             summary={
-                "selected_chunks": len(context_pack.selected_chunks),
+                "selected_chunk_count": len(context_pack.selected_chunks),
                 "token_estimate": context_pack.token_estimate,
+                "source_count": len(context_pack.source_mapping),
             },
         )
 
@@ -319,6 +322,7 @@ class RunExecutor:
             summary={
                 "decision": verification_result.decision,
                 "grounded": verification_result.grounded,
+                "adequacy_ok": verification_result.adequacy_ok,
                 "regeneration_attempted": verification_result.regeneration_attempted,
             },
         )
@@ -520,3 +524,19 @@ class RunExecutor:
             "cannot_answer": "The system cannot answer this reliably from the available evidence.",
         }
         return messages.get(category, default or "The system cannot answer this reliably.")
+
+    def _scope_label(self, scope) -> str:
+        if scope is None:
+            return "No scope selected"
+
+        return " / ".join(
+            value
+            for value in [
+                scope.workspace,
+                scope.domain,
+                scope.project,
+                scope.client,
+                scope.module,
+            ]
+            if value
+        )

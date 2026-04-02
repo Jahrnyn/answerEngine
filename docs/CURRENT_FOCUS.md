@@ -9,7 +9,8 @@ Active stream / live run preview refinement after initial frontend SSE consumpti
 Status:
 - the backend now exposes bounded live run events over SSE
 - the frontend now consumes that transport for non-final stage/activity preview on the main surface
-- the next implementation step is to extend preview richness without weakening final verified answer semantics
+- richer stage-summary preview now exists for scope, retrieval, context, and verification
+- the next implementation step is to extend preview richness further without weakening final verified answer semantics
 
 ---
 
@@ -26,7 +27,7 @@ Included:
 - staged live preview refinement
 - preservation of preview versus final answer semantics
 - minimal slices toward usable live run visibility
-- preview-only generation-text work as a future incremental step
+- preview-only generation-text work as the next higher-value incremental step
 
 Excluded:
 - persistence

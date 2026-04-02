@@ -69,3 +69,6 @@
 - Added explicit frontend preview-state handling for current stage, bounded activity messages, and stage-summary visibility during execution, followed by a clean transition into the existing final verified-answer view on terminal completion.
 - Added a bounded terminal SSE payload carrying the final run data needed for the frontend to populate the final result and inspect drawer without rerunning the pipeline.
 - Re-checked the frontend build locally, re-checked backend compile/import sanity, and re-checked the SSE path with a controlled local route invocation that confirms ordered events and a terminal `final_run` payload.
+- Implemented Slice AS-4 with richer bounded stage summaries for `scope_inference`, `retrieval_execution`, `context_assembly`, and `answer_verification` in backend run events.
+- Refined the frontend running-preview shell so the latest active stage can surface more useful scope, retrieval, context, and verification details without changing final-answer semantics.
+- Re-checked the frontend build, backend compile/import sanity, and controlled SSE stage summaries locally; no generation preview text streaming was added in this slice.

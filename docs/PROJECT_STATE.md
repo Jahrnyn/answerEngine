@@ -65,6 +65,7 @@ Status: PARTIALLY IMPLEMENTED
 - Inspect drawer now uses a compact right-edge handle instead of a floating CTA-style trigger
 - Richer trace-oriented rendering exists for scope, retrieval, verification, context preview, stage routing, timings, token visibility, and errors
 - Frontend live run preview shell now exists with SSE consumption, bounded stage activity updates, and explicit running-preview versus final-result state separation
+- Live run preview now surfaces richer stage summaries for scope inference, retrieval execution, context assembly, and answer verification while the run is active
 - No advanced trace/debug explorer exists yet
 - No generation preview text streaming exists yet
 
@@ -144,6 +145,7 @@ Current code state:
 - bounded in-memory run lifecycle events are now emitted during execution and attached to dev run output
 - bounded run events may now also be transported over SSE through a dedicated streaming run route
 - the Angular frontend now consumes the SSE run route for live stage/activity preview while keeping final answer rendering post-verification
+- live stage summaries are now enriched for scope inference, retrieval execution, context assembly, and answer verification so the preview surface can show more useful bounded execution state
 - final response mapping remains structurally simple
 
 ---
@@ -308,6 +310,7 @@ The following have been verified against the current live local CfHEE setup:
 - backend `/runs/execute` now returns bounded in-memory run events, including run lifecycle events, stage lifecycle events, and one bounded generation preview snapshot when answer text exists
 - backend now exposes a dedicated SSE route for bounded live run event transport while preserving `/runs/execute`
 - the frontend now consumes `POST /runs/stream` and shows a non-final running-preview shell with current stage and bounded activity details until the terminal event arrives
+- the running-preview shell now shows richer bounded stage summaries for scope, retrieval, context, and verification progress
 - final verified answer rendering remains unchanged and still appears only after terminal completion
 
 Any assumption that these exist is incorrect.

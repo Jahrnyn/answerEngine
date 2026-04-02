@@ -290,6 +290,13 @@ textarea::placeholder {
   font-weight: 600;
 }
 
+.preview-run-id {
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .preview-pill {
   display: inline-flex;
   align-items: center;

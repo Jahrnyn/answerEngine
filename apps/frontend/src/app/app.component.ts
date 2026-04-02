@@ -92,6 +92,10 @@ export class AppComponent {
     return this.previewState.latestSummaryRows;
   }
 
+  get previewRunId(): string | null {
+    return this.previewState.runId;
+  }
+
   get answerText(): string {
     return this.runResult?.final_response.answer_text || 'No final answer returned.';
   }
@@ -493,20 +497,15 @@ export class AppComponent {
 
   private summaryRowsForEvent(event: RunEvent): KeyValueRow[] {
     const rows: KeyValueRow[] = [];
-
-    if (event.run_id) {
-      rows.push({ label: 'Run id', value: event.run_id });
-    }
-
-    const entries = Object.entries(event.summary ?? {})
+    const entries = this.orderedSummaryEntries(event)
       .filter(([key]) => key !== 'final_run')
-      .slice(0, 4);
+      .slice(0, 6);
 
     for (const [key, value] of entries) {
       rows.push({
-        label: this.humanizeLabel(key),
+        label: this.summaryLabel(key),
         value: this.summaryValueLabel(value),
-        tone: typeof value === 'string' && value.includes('failure') ? 'warn' : 'default',
+        tone: this.summaryTone(key, value),
       });
     }
 
@@ -523,6 +522,83 @@ export class AppComponent {
 
   private humanizeLabel(value: string): string {
     return value.replace(/_/g, ' ');
+  }
+
+  private orderedSummaryEntries(event: RunEvent): Array<[string, unknown]> {
+    const summary = event.summary ?? {};
+    const entries = Object.entries(summary);
+    const preferredOrder = this.preferredSummaryOrder(event.stage_id, event.event_type);
+
+    if (preferredOrder.length === 0) {
+      return entries;
+    }
+
+    return entries.sort(([leftKey], [rightKey]) => {
+      const leftIndex = preferredOrder.indexOf(leftKey);
+      const rightIndex = preferredOrder.indexOf(rightKey);
+      const normalizedLeftIndex = leftIndex === -1 ? preferredOrder.length : leftIndex;
+      const normalizedRightIndex = rightIndex === -1 ? preferredOrder.length : rightIndex;
+      return normalizedLeftIndex - normalizedRightIndex;
+    });
+  }
+
+  private preferredSummaryOrder(stageId: string | null | undefined, eventType: string): string[] {
+    if (eventType === 'run_completed' || eventType === 'run_failed') {
+      return ['decision', 'certainty', 'error_count', 'trace_id', 'source_count'];
+    }
+
+    switch (stageId) {
+      case 'scope_inference':
+        return ['status', 'primary_scope', 'fallback_applied', 'retained_secondary_scope_count', 'failure_reason'];
+      case 'retrieval_execution':
+        return ['status', 'executed_rounds', 'aggregated_result_count', 'failure_reason'];
+      case 'context_assembly':
+        return ['selected_chunk_count', 'token_estimate', 'source_count'];
+      case 'answer_verification':
+        return ['decision', 'grounded', 'adequacy_ok', 'regeneration_attempted'];
+      default:
+        return [];
+    }
+  }
+
+  private summaryLabel(key: string): string {
+    const labels: Record<string, string> = {
+      adequacy_ok: 'Adequacy ok',
+      aggregated_result_count: 'Aggregated results',
+      candidate_count: 'Candidate scopes',
+      error_count: 'Errors',
+      executed_rounds: 'Executed rounds',
+      failure_reason: 'Failure reason',
+      fallback_applied: 'Fallback applied',
+      max_retrieval_rounds: 'Max retrieval rounds',
+      planned_rounds: 'Planned rounds',
+      primary_scope: 'Primary scope',
+      query_length: 'Query length',
+      regeneration_attempted: 'Regeneration attempted',
+      retained_secondary_scope_count: 'Secondary scopes kept',
+      selected_chunk_count: 'Selected chunks',
+      source_count: 'Sources',
+      token_estimate: 'Context token estimate',
+      trace_id: 'Trace id',
+    };
+
+    return labels[key] ?? this.humanizeLabel(key);
+  }
+
+  private summaryTone(key: string, value: unknown): 'default' | 'muted' | 'warn' {
+    if (key === 'failure_reason' && value) {
+      return 'warn';
+    }
+
+    if (key === 'status' && typeof value === 'string' && value !== 'ok') {
+      return value === 'no_evidence' ? 'muted' : 'warn';
+    }
+
+    if (key === 'decision' && typeof value === 'string' && value !== 'keep') {
+      return value === 'limit' ? 'muted' : 'warn';
+    }
+
+    return 'default';
   }
 
   private summaryValueLabel(value: unknown): string {
