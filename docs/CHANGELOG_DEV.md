@@ -59,3 +59,6 @@
 - Integrated `docs/ACTIVE_STREAM.md` into the documentation system and aligned architecture, pipeline, and project-state docs around future live run preview as a non-final execution-visibility layer.
 - Added a minimal conceptual backend run-event contract in `DOMAIN_MODEL` for future run activity transport, including `RunEvent` and `RunEventType`.
 - Updated current focus toward active stream / live run preview groundwork without claiming any SSE, event emission, or frontend live preview implementation.
+- Implemented Slice 14 with bounded in-memory backend run event emission, collecting run and stage lifecycle events during execution and attaching them to the final dev run output.
+- Added one bounded generation preview snapshot event to the answer-generation path without introducing SSE, transport, or user-visible streaming behavior.
+- Re-checked backend execution locally so `/runs/execute` still returns normal final answer output while now also returning `events[]` for dev/debug inspection.

@@ -481,6 +481,7 @@ AnswerRun:
 - final_response
 - timings
 - errors
+- events
 
 Trace must be:
 - complete
@@ -488,6 +489,10 @@ Trace must be:
 - accessible to UI
 - stage-attributed errors should remain visible when upstream or runtime failures prevent normal completion
 - compatible with future run-event emission for live preview without collapsing preview and final response into the same contract
+
+Current backend note:
+- the current backend slice now collects bounded in-memory run events and returns them in dev run output for inspection
+- this is a debug-oriented event surface only and does not imply live transport or user-visible streaming
 
 ---
 

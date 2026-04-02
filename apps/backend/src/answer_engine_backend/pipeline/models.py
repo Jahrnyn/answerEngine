@@ -136,6 +136,16 @@ class RunError(BaseModel):
     endpoint: str | None = None
 
 
+class RunEvent(BaseModel):
+    run_id: str
+    event_type: str
+    stage_id: str | None = None
+    timestamp: datetime
+    message: str | None = None
+    preview_text: str | None = None
+    summary: dict[str, str | int | float | bool] = Field(default_factory=dict)
+
+
 class FinalResponse(BaseModel):
     answer_text: str
     sources: list[SourceReference]
@@ -167,6 +177,7 @@ class AnswerRun(BaseModel):
     final_response: FinalResponse
     timings: TimingInfo
     errors: list[RunError] = Field(default_factory=list)
+    events: list[RunEvent] = Field(default_factory=list)
 
 
 class StageTimer:

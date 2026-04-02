@@ -44,6 +44,7 @@ Status: PARTIALLY IMPLEMENTED
 - Practical V1 answer generation exists with a simple grounded prompt path and local Ollama runtime integration
 - Practical V1 answer verification exists with combined bounded evaluation and at-most-one regeneration handling
 - Practical V1 failure hardening exists for scope inference, retrieval execution, and final cannot-answer behavior under upstream timeout/failure conditions
+- Practical in-memory run-event emission now exists across the pipeline for dev/debug inspection
 - Explicit stub stage boundaries remain in the final response mapping layer only
 - Thin CfHEE client foundation exists
 - Central stage model resolver skeleton exists
@@ -138,6 +139,7 @@ Current code state:
 - Answer Generation uses a simple grounded prompt path with the local model runtime and explicit failure surfacing
 - Answer Verification uses combined bounded rule checks, model-assisted evaluation when available, and at-most-one explicit regeneration
 - retrieval and final run output now preserve explicit upstream timeout/unavailable/failure distinctions instead of collapsing them into no-evidence behavior
+- bounded in-memory run lifecycle events are now emitted during execution and attached to dev run output
 - final response mapping remains structurally simple
 
 ---
@@ -160,7 +162,7 @@ Includes:
 Current code state:
 - `AnswerRun`-like execution payload assembled by the backend skeleton
 - stage model routing metadata may be attached to run output for inspectability
-- run-event contract now defined in documentation only for future live preview work
+- bounded `events` are now attached to run output for dev/debug inspection
 - no persistence
 
 ---
@@ -270,7 +272,8 @@ The following DO exist in minimal structural form:
 - practical V1 stage-attributed failure surfacing through `AnswerRun.errors`
 - Angular app shell with a dark main question/answer surface and thin `/runs/execute` integration
 - optional inspect drawer with richer run-detail rendering
-- no live run preview transport, event emission, or preview-text streaming implementation yet
+- bounded in-memory run event emission for dev/debug inspection
+- no live run preview transport or preview-text streaming implementation yet
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -294,6 +297,7 @@ The following have been verified against the current live local CfHEE setup:
 - the refined main result surface has been re-checked against a live timeout-path run payload and now surfaces cannot-answer state, certainty, verification decision, trace id, run time, primary scope, and limitations more clearly without requiring the inspect drawer
 - the inspect drawer trigger has been cleaned up to a compact right-edge handle and the floating inspect CTA is no longer part of the current frontend shell
 - the active stream design document is now integrated into the documentation system and the minimal run-event contract is defined conceptually only
+- backend `/runs/execute` now returns bounded in-memory run events, including run lifecycle events, stage lifecycle events, and one bounded generation preview snapshot when answer text exists
 
 Any assumption that these exist is incorrect.
 

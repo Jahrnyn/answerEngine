@@ -65,12 +65,14 @@ AnswerRun:
 - conversation_ref: ConversationRef (optional)
 - timings: TimingInfo
 - errors: list (optional)
+- events: list[RunEvent] (optional)
 
 Notes:
 - `AnswerRun` remains the primary V1 execution entity
 - optional conversation support may link to a run but is not the primary reasoning substrate
 - stage model routing may be attached for execution inspectability without embedding provider execution logic into stage code
 - `answer_result` may reflect one bounded regenerated candidate when V1 verification performs an allowed retry
+- `events` may carry bounded in-memory run lifecycle and preview events for dev/debug inspection without changing final answer semantics
 
 ---
 

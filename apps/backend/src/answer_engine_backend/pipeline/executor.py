@@ -2,6 +2,7 @@ from answer_engine_backend.model_runtime import ModelRuntimeError
 from answer_engine_backend.pipeline.models import (
     AnswerResult,
     AnswerRun,
+    RunEvent,
     RunError,
     StageTimer,
     VerificationResult,
@@ -43,6 +44,34 @@ class RunExecutor:
         timer = StageTimer()
         run_id = new_run_id()
         errors: list[RunError] = []
+        events: list[RunEvent] = []
+        created_at = utc_now()
+
+        def emit_event(
+            event_type: str,
+            *,
+            stage_id: str | None = None,
+            message: str | None = None,
+            preview_text: str | None = None,
+            summary: dict[str, str | int | float | bool] | None = None,
+        ) -> None:
+            events.append(
+                RunEvent(
+                    run_id=run_id,
+                    event_type=event_type,
+                    stage_id=stage_id,
+                    timestamp=utc_now(),
+                    message=message,
+                    preview_text=preview_text,
+                    summary=summary or {},
+                )
+            )
+
+        emit_event(
+            "run_started",
+            message="Answer run started.",
+            summary={"query_length": len(query)},
+        )
         stage_model_routing = self.stage_model_resolver.resolve_many(
             [
                 "query_analysis",
@@ -69,42 +98,128 @@ class RunExecutor:
         )
 
         timer.start_stage()
+        emit_event("stage_started", stage_id="query_analysis", message="Query analysis started.")
         query_analysis = self.query_analysis_stage.execute(query)
         timer.end_stage("query_analysis")
+        emit_event(
+            "stage_completed",
+            stage_id="query_analysis",
+            message="Query analysis completed.",
+            summary={
+                "intent_type": query_analysis.intent_type,
+                "requires_retrieval": query_analysis.requires_retrieval,
+                "query_variants": len(query_analysis.query_variants),
+            },
+        )
 
         timer.start_stage()
+        emit_event(
+            "stage_started",
+            stage_id="answer_policy_resolution",
+            message="Answer policy resolution started.",
+        )
         answer_policy = self.answer_policy_resolution_stage.execute(query_analysis)
         timer.end_stage("answer_policy_resolution")
+        emit_event(
+            "stage_completed",
+            stage_id="answer_policy_resolution",
+            message="Answer policy resolution completed.",
+            summary={
+                "retrieval_required": answer_policy.retrieval_required,
+                "max_retrieval_rounds": answer_policy.max_retrieval_rounds,
+                "allow_regeneration": answer_policy.allow_regeneration,
+            },
+        )
 
         timer.start_stage()
+        emit_event("stage_started", stage_id="scope_inference", message="Scope inference started.")
         scope_inference = self.scope_inference_stage.execute(query_analysis)
         timer.end_stage("scope_inference")
         self._record_non_success_scope_inference(errors, scope_inference)
+        emit_event(
+            "stage_completed",
+            stage_id="scope_inference",
+            message="Scope inference completed.",
+            summary={
+                "status": scope_inference.status,
+                "fallback_applied": scope_inference.fallback_applied,
+                "candidate_count": len(scope_inference.candidate_scopes),
+                "secondary_scope_count": len(scope_inference.secondary_scopes),
+            },
+        )
 
         timer.start_stage()
+        emit_event(
+            "stage_started",
+            stage_id="retrieval_planning",
+            message="Retrieval planning started.",
+        )
         retrieval_plan = self.retrieval_planning_stage.execute(
             query_analysis,
             answer_policy,
             scope_inference,
         )
         timer.end_stage("retrieval_planning")
+        emit_event(
+            "stage_completed",
+            stage_id="retrieval_planning",
+            message="Retrieval planning completed.",
+            summary={
+                "planned_rounds": len(retrieval_plan.rounds),
+                "scope_status": retrieval_plan.fallback_rules.get("scope_status", "n/a"),
+            },
+        )
 
         timer.start_stage()
+        emit_event(
+            "stage_started",
+            stage_id="retrieval_execution",
+            message="Retrieval execution started.",
+        )
         retrieval_result = self.retrieval_execution_stage.execute(
             retrieval_plan,
             query_analysis.normalized_query,
         )
         timer.end_stage("retrieval_execution")
         self._record_non_success_retrieval(errors, retrieval_result)
+        emit_event(
+            "stage_completed",
+            stage_id="retrieval_execution",
+            message="Retrieval execution completed.",
+            summary={
+                "status": retrieval_result.status,
+                "executed_rounds": len(retrieval_result.results_by_round),
+                "aggregated_results": len(retrieval_result.aggregated_results),
+            },
+        )
 
         timer.start_stage()
+        emit_event(
+            "stage_started",
+            stage_id="context_assembly",
+            message="Context assembly started.",
+        )
         context_pack = self.context_assembly_stage.execute(
             retrieval_result,
             answer_policy,
         )
         timer.end_stage("context_assembly")
+        emit_event(
+            "stage_completed",
+            stage_id="context_assembly",
+            message="Context assembly completed.",
+            summary={
+                "selected_chunks": len(context_pack.selected_chunks),
+                "token_estimate": context_pack.token_estimate,
+            },
+        )
 
         timer.start_stage()
+        emit_event(
+            "stage_started",
+            stage_id="answer_generation",
+            message="Answer generation started.",
+        )
         if self._should_skip_generation(scope_inference, retrieval_result):
             answer_result = self._build_failure_answer_result(
                 category=self._derive_failure_category(scope_inference, retrieval_result),
@@ -132,8 +247,31 @@ class RunExecutor:
                     message=error.message,
                 )
         timer.end_stage("answer_generation")
+        if answer_result.answer_text:
+            emit_event(
+                "stage_preview",
+                stage_id="answer_generation",
+                message="Bounded answer preview snapshot.",
+                preview_text=answer_result.answer_text[:200],
+                summary={"preview_chars": min(len(answer_result.answer_text), 200)},
+            )
+        emit_event(
+            "stage_completed",
+            stage_id="answer_generation",
+            message="Answer generation completed.",
+            summary={
+                "answer_present": bool(answer_result.answer_text),
+                "token_usage_present": bool(answer_result.token_usage),
+                "failure_category": str(answer_result.model_metadata.get("failure_category", "none")),
+            },
+        )
 
         timer.start_stage()
+        emit_event(
+            "stage_started",
+            stage_id="answer_verification",
+            message="Answer verification started.",
+        )
         if self._should_skip_verification(scope_inference, retrieval_result, errors):
             verification_result = self._build_failure_verification_result(
                 category=self._derive_failure_category(scope_inference, retrieval_result, errors),
@@ -166,8 +304,23 @@ class RunExecutor:
                     message=error.message,
                 )
         timer.end_stage("answer_verification")
+        emit_event(
+            "stage_completed",
+            stage_id="answer_verification",
+            message="Answer verification completed.",
+            summary={
+                "decision": verification_result.decision,
+                "grounded": verification_result.grounded,
+                "regeneration_attempted": verification_result.regeneration_attempted,
+            },
+        )
 
         timer.start_stage()
+        emit_event(
+            "stage_started",
+            stage_id="final_response_mapping",
+            message="Final response mapping started.",
+        )
         final_response = self.final_response_mapping_stage.execute(
             run_id,
             answer_result,
@@ -176,11 +329,36 @@ class RunExecutor:
             context_pack.source_mapping,
         )
         timer.end_stage("final_response_mapping")
+        emit_event(
+            "stage_completed",
+            stage_id="final_response_mapping",
+            message="Final response mapping completed.",
+            summary={
+                "certainty": final_response.certainty,
+                "source_count": len(final_response.sources),
+                "limitation_count": len(final_response.limitations),
+            },
+        )
+
+        run_failed = bool(errors) or verification_result.decision == "cannot_answer"
+        emit_event(
+            "run_failed" if run_failed else "run_completed",
+            message=(
+                self._derive_failure_message(scope_inference, retrieval_result, errors)
+                if run_failed
+                else "Answer run completed."
+            ),
+            summary={
+                "decision": verification_result.decision,
+                "error_count": len(errors),
+                "certainty": final_response.certainty,
+            },
+        )
 
         return AnswerRun(
             id=run_id,
             query=query,
-            created_at=utc_now(),
+            created_at=created_at,
             answer_policy=answer_policy,
             stage_model_routing=stage_model_routing,
             query_analysis=query_analysis,
@@ -193,6 +371,7 @@ class RunExecutor:
             final_response=final_response,
             timings=timer.build(),
             errors=errors,
+            events=events,
         )
 
     def _build_failure_answer_result(
