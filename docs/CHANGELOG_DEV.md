@@ -51,3 +51,6 @@
 - Added richer run visibility for total run time, primary scope, retrieval scopes, verification outcome, certainty, token visibility, context token estimate, routing, timings, trace id, and stage-attributed errors when those values are present in backend output.
 - Kept the main answer surface primary while promoting the inspect view into a more structured secondary diagnostics surface.
 - Re-checked the refined frontend build and verified the richer inspect path again through the frontend dev proxy with a live timeout-path run response.
+- Implemented Slice 13 with a more intentional main result surface for success, limited, cannot-answer, and uncertainty-heavy outcomes.
+- Refined the primary answer card to keep answer text visually dominant while surfacing certainty, verification decision, primary scope, total run time, trace id, and top limitations more clearly.
+- Re-checked the frontend build and verified the refined main-result path again through the frontend dev proxy with a live timeout-path run response.

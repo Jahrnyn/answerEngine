@@ -132,4 +132,17 @@ describe('AppComponent', () => {
     expect(compiled.textContent).toContain('qwen2.5:7b');
     expect(compiled.textContent).toContain('prompt 100 | completion 50 | total 150');
   });
+
+  it('should render the refined main result summary for a completed run', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    app.runResult = mockRunResponse;
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.result-state-pill')?.textContent).toContain('Grounded answer');
+    expect(compiled.textContent).toContain('Primary scope');
+    expect(compiled.textContent).toContain('Trace id');
+    expect(compiled.textContent).toContain('This is a bounded local run.');
+  });
 });

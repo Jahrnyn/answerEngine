@@ -75,33 +75,60 @@
           <p class="error-detail" *ngIf="requestError.detail">{{ requestError.detail }}</p>
         </div>
 
-        <article class="answer-card" *ngIf="runResult">
+        <article class="answer-card" *ngIf="runResult" [ngClass]="resultToneClass">
+          <header class="result-overview">
+            <div class="result-copy">
+              <p class="result-kicker">{{ resultStateLabel }}</p>
+              <p class="result-lead">{{ resultLead }}</p>
+            </div>
+            <div class="result-badge-stack">
+              <span class="result-state-pill" [ngClass]="resultToneClass">{{ resultStateLabel }}</span>
+              <span class="decision-pill subtle">{{ verificationDecision | titlecase }}</span>
+            </div>
+          </header>
+
           <p class="answer-text">{{ answerText }}</p>
 
-          <section class="limitations" *ngIf="limitations.length > 0">
-            <h3>Limitations</h3>
-            <ul>
-              <li *ngFor="let limitation of limitations">{{ limitation }}</li>
-            </ul>
-          </section>
-
           <section class="summary-strip">
+            <div class="meta-card">
+              <p class="meta-label">Certainty</p>
+              <p class="meta-value">{{ certaintyLabel ? (certaintyLabel | titlecase) : 'Not available' }}</p>
+            </div>
+            <div class="meta-card">
+              <p class="meta-label">Decision</p>
+              <p class="meta-value">{{ verificationDecision | titlecase }}</p>
+            </div>
+            <div class="meta-card">
+              <p class="meta-label">Primary scope</p>
+              <p class="meta-value">{{ primaryScopeLabel }}</p>
+            </div>
+            <div class="meta-card">
+              <p class="meta-label">Run time</p>
+              <p class="meta-value">{{ totalRunTimeLabel }}</p>
+            </div>
             <div class="meta-card">
               <p class="meta-label">Trace id</p>
               <p class="meta-value">{{ traceId }}</p>
             </div>
-            <div class="meta-card">
-              <p class="meta-label">Run time</p>
-              <p class="meta-value">{{ runResult.timings.total_time_ms }} ms</p>
+          </section>
+
+          <section class="limitations" *ngIf="limitations.length > 0">
+            <div class="limitations-header">
+              <h3>Top limitations</h3>
+              <span class="section-badge">{{ limitations.length }}</span>
             </div>
-            <div class="meta-card">
-              <p class="meta-label">Primary scope</p>
-              <p class="meta-value">{{ scopeLabel(scopeInference?.primary_scope) }}</p>
+            <div class="limitation-list">
+              <div class="limitation-chip" *ngFor="let limitation of topLimitations">
+                {{ limitation }}
+              </div>
             </div>
           </section>
 
           <section class="run-errors" *ngIf="runErrors.length > 0">
-            <h3>Run errors</h3>
+            <div class="limitations-header">
+              <h3>Run errors</h3>
+              <span class="section-badge">{{ runErrors.length }}</span>
+            </div>
             <ul>
               <li *ngFor="let runError of runErrors">
                 <strong>{{ runError.stage }}</strong>: {{ runError.message }}

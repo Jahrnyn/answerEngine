@@ -116,6 +116,7 @@ Current frontend slice:
 
 - Angular standalone app under `apps/frontend`
 - dark main question/answer surface
+- refined main result surface with clearer success, limitation, cannot-answer, and uncertainty-oriented rendering
 - optional inspect side-panel with richer run-detail rendering
 
 Current frontend dev behavior:
@@ -123,7 +124,7 @@ Current frontend dev behavior:
 - the Angular dev server runs on `http://127.0.0.1:8760`
 - the frontend proxies `/runs` and `/health` to the backend on `http://127.0.0.1:8761`
 - the main surface can submit a question to `POST /runs/execute`
-- returned final answer, certainty, limitations, and request failure state are rendered on the page
+- returned final answer, certainty, verification decision, limitations, request failure state, and top run summary details are rendered on the page
 - the inspect side-panel can be opened or closed explicitly
 - the inspect panel can render run summary, scope, retrieval, verification, context preview, routing, timings, token visibility, and error details when a run payload is present
 

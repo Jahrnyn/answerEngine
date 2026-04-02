@@ -57,7 +57,8 @@ Status: PARTIALLY IMPLEMENTED
 - Dark-theme baseline exists for V1
 - Main question/answer surface exists
 - Minimal frontend-to-backend call path exists for `/runs/execute`
-- Basic running, error, certainty, and limitations rendering exists
+- Refined main result surface exists with clearer keep / limit / cannot-answer / uncertainty-oriented rendering
+- Main result summary visibility now includes certainty, verification decision, primary scope, run time, trace id, and top limitations when present
 - Optional inspect side-panel exists as a real secondary drawer-style surface
 - Richer trace-oriented rendering exists for scope, retrieval, verification, context preview, stage routing, timings, token visibility, and errors
 - No advanced trace/debug explorer exists yet
@@ -285,6 +286,7 @@ The following have been verified against the current live local CfHEE setup:
 - the frontend dev proxy now reaches the backend `/runs/execute` route on `http://127.0.0.1:8761`
 - the frontend inspect panel shell has been re-checked against a live timeout-path run payload and now renders practical trace-adjacent data sections from the backend run output
 - the refined inspect side-panel has been re-checked against a live timeout-path run payload and now surfaces run time, scope status, retrieval status, verification decision, token visibility, timings, routing, and errors more prominently
+- the refined main result surface has been re-checked against a live timeout-path run payload and now surfaces cannot-answer state, certainty, verification decision, trace id, run time, primary scope, and limitations more clearly without requiring the inspect drawer
 
 Any assumption that these exist is incorrect.
 

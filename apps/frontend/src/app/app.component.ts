@@ -58,6 +58,14 @@ export class AppComponent {
     return this.runResult?.final_response.answer_text || 'No final answer returned.';
   }
 
+  get primaryScopeLabel(): string {
+    return this.scopeLabel(this.scopeInference?.primary_scope);
+  }
+
+  get totalRunTimeLabel(): string {
+    return this.runResult ? `${this.runResult.timings.total_time_ms} ms` : 'n/a';
+  }
+
   get certaintyLabel(): string | null {
     return this.runResult?.final_response.certainty ?? null;
   }
@@ -77,6 +85,79 @@ export class AppComponent {
 
   get verificationDecision(): string {
     return this.runResult?.verification_result.decision ?? 'n/a';
+  }
+
+  get resultState(): 'success' | 'limited' | 'cannot-answer' | 'uncertain' | 'idle' {
+    if (!this.runResult) {
+      return 'idle';
+    }
+
+    if (this.verificationDecision === 'cannot_answer') {
+      return 'cannot-answer';
+    }
+
+    if (this.verificationDecision === 'limit') {
+      return 'limited';
+    }
+
+    if (
+      this.certaintyLabel === 'uncertain' ||
+      this.certaintyLabel === 'low' ||
+      (this.verificationResult?.confidence_score ?? 1) < 0.5
+    ) {
+      return 'uncertain';
+    }
+
+    return 'success';
+  }
+
+  get resultStateLabel(): string {
+    switch (this.resultState) {
+      case 'success':
+        return 'Grounded answer';
+      case 'limited':
+        return 'Limited answer';
+      case 'cannot-answer':
+        return 'Cannot answer';
+      case 'uncertain':
+        return 'Uncertain answer';
+      default:
+        return 'No result';
+    }
+  }
+
+  get resultLead(): string {
+    switch (this.resultState) {
+      case 'success':
+        return 'The current run produced a kept answer with usable grounding from the bounded pipeline.';
+      case 'limited':
+        return 'The current run returned a constrained answer. Review the top limitations before relying on it.';
+      case 'cannot-answer':
+        return 'The current run could not produce a trustworthy final answer within the bounded V1 path.';
+      case 'uncertain':
+        return 'The current run produced an answer, but certainty is reduced and the result should be treated cautiously.';
+      default:
+        return 'Submit a run to see the final answer here.';
+    }
+  }
+
+  get resultToneClass(): string {
+    switch (this.resultState) {
+      case 'success':
+        return 'state-success';
+      case 'limited':
+        return 'state-limited';
+      case 'cannot-answer':
+        return 'state-cannot-answer';
+      case 'uncertain':
+        return 'state-uncertain';
+      default:
+        return 'state-idle';
+    }
+  }
+
+  get topLimitations(): string[] {
+    return this.limitations.slice(0, 3);
   }
 
   get traceId(): string {
