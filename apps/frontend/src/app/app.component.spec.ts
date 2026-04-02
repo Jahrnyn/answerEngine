@@ -187,6 +187,9 @@ describe('AppComponent', () => {
         { label: 'Run id', value: 'run-preview' },
         { label: 'Executed rounds', value: '1' },
       ],
+      generationPreviewText: '',
+      generationPreviewCycle: 0,
+      generationPreviewActive: false,
     };
     fixture.detectChanges();
 
@@ -208,6 +211,8 @@ describe('AppComponent', () => {
       latestMessage: 'Generation preview updated.',
       latestSummaryRows: [{ label: 'Preview chars', value: '96' }],
       generationPreviewText: 'This is still preview-only text and not the final verified answer.',
+      generationPreviewCycle: 0,
+      generationPreviewActive: true,
     };
     fixture.detectChanges();
 
@@ -215,5 +220,64 @@ describe('AppComponent', () => {
     expect(compiled.querySelector('.generation-preview-copy')?.textContent).toContain('preview-only text');
     expect(compiled.querySelector('.preview-text-pill')?.textContent).toContain('Draft text');
     expect(compiled.querySelector('.answer-card')).toBeNull();
+  });
+
+  it('should clear stale generation preview text when verification becomes the active stage', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    app.runViewState = 'running_preview';
+    app.previewState = {
+      runId: 'run-preview',
+      currentStageId: 'answer_generation',
+      currentStageLabel: 'Answer Generation',
+      latestMessage: 'Generation preview updated.',
+      latestSummaryRows: [{ label: 'Preview chars', value: '96' }],
+      generationPreviewText: 'Transient generation preview text.',
+      generationPreviewCycle: 0,
+      generationPreviewActive: true,
+    };
+
+    (app as never as { applyRunEvent: (event: unknown) => void }).applyRunEvent({
+      run_id: 'run-preview',
+      event_type: 'stage_started',
+      stage_id: 'answer_verification',
+      timestamp: '2026-04-02T11:00:00Z',
+      message: 'Answer verification started.',
+      summary: {},
+    });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.generation-preview')).toBeNull();
+    expect(compiled.textContent).toContain('Answer Verification');
+  });
+
+  it('should mark regenerated preview text as a new preview cycle', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    app.runViewState = 'running_preview';
+
+    (app as never as { applyRunEvent: (event: unknown) => void }).applyRunEvent({
+      run_id: 'run-preview',
+      event_type: 'stage_progress',
+      stage_id: 'answer_verification',
+      timestamp: '2026-04-02T11:00:00Z',
+      message: 'Verification requested one bounded regeneration pass.',
+      summary: { regeneration_triggered: true },
+    });
+    (app as never as { applyRunEvent: (event: unknown) => void }).applyRunEvent({
+      run_id: 'run-preview',
+      event_type: 'stage_preview',
+      stage_id: 'answer_generation',
+      timestamp: '2026-04-02T11:00:02Z',
+      message: 'Regenerated generation preview updated.',
+      preview_text: 'Replacement preview text from the regeneration pass.',
+      summary: { preview_chars: 52, regeneration_cycle: 1 },
+    });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.preview-text-pill')?.textContent).toContain('Regeneration preview');
+    expect(compiled.textContent).toContain('Replacement preview text');
   });
 });

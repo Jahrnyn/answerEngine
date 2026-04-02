@@ -127,6 +127,7 @@ Current frontend dev behavior:
 - the frontend consumes bounded SSE run events for live stage/activity preview while the run is active
 - the running preview now shows richer bounded stage summaries for scope inference, retrieval execution, context assembly, and answer verification
 - the main surface may now also show bounded generation preview text while `answer_generation` is active
+- preview text is now treated as stage-scoped ephemeral state and is cleared or restarted when verification takes over, bounded regeneration happens, or the run resolves terminally
 - the main surface transitions into the existing final result view only after the terminal completion event arrives
 - returned final answer, certainty, verification decision, limitations, request failure state, and top run summary details are rendered on the page
 - the inspect side-panel can be opened or closed explicitly

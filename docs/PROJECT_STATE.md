@@ -67,6 +67,7 @@ Status: PARTIALLY IMPLEMENTED
 - Frontend live run preview shell now exists with SSE consumption, bounded stage activity updates, and explicit running-preview versus final-result state separation
 - Live run preview now surfaces richer stage summaries for scope inference, retrieval execution, context assembly, and answer verification while the run is active
 - Generation preview text streaming now exists as non-final `answer_generation` preview output on the main surface during active runs
+- Frontend preview lifecycle handling now clears or supersedes stale generation preview text when later stages take over, including bounded regeneration and terminal cannot-answer paths
 - No advanced trace/debug explorer exists yet
 - No token-by-token preview guarantee exists
 
@@ -313,6 +314,7 @@ The following have been verified against the current live local CfHEE setup:
 - the frontend now consumes `POST /runs/stream` and shows a non-final running-preview shell with current stage and bounded activity details until the terminal event arrives
 - the running-preview shell now shows richer bounded stage summaries for scope, retrieval, context, and verification progress
 - the running-preview shell now also shows bounded generation preview text while `answer_generation` is active, and that text is replaced by the final verified result only after terminal completion
+- preview text is now explicitly cleared or restarted when the run leaves generation, when verification triggers regeneration, and when terminal cannot-answer or failure states resolve the run
 - final verified answer rendering remains unchanged and still appears only after terminal completion
 
 Any assumption that these exist is incorrect.

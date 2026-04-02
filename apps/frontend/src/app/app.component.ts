@@ -40,6 +40,8 @@ type PreviewState = {
   latestMessage: string;
   latestSummaryRows: KeyValueRow[];
   generationPreviewText: string;
+  generationPreviewCycle: number;
+  generationPreviewActive: boolean;
 };
 
 @Component({
@@ -99,6 +101,14 @@ export class AppComponent {
 
   get generationPreviewText(): string {
     return this.previewState.generationPreviewText;
+  }
+
+  get isGenerationPreviewActive(): boolean {
+    return this.previewState.generationPreviewActive && this.previewState.generationPreviewText.length > 0;
+  }
+
+  get generationPreviewBadgeLabel(): string {
+    return this.previewState.generationPreviewCycle > 0 ? 'Regeneration preview' : 'Draft text';
   }
 
   get answerText(): string {
@@ -428,6 +438,8 @@ export class AppComponent {
       latestMessage: 'Opening the bounded run stream and waiting for the first stage event.',
       latestSummaryRows: [],
       generationPreviewText: '',
+      generationPreviewCycle: 0,
+      generationPreviewActive: false,
     };
 
     try {
@@ -469,12 +481,19 @@ export class AppComponent {
 
   private applyRunEvent(event: RunEvent): void {
     const nextStageId = event.stage_id ?? this.previewState.currentStageId;
+    const nextPreviewCycle = this.previewCycleForEvent(event);
     const nextPreviewText =
       event.event_type === 'stage_preview' && event.stage_id === 'answer_generation'
         ? String(event.preview_text ?? this.previewState.generationPreviewText)
         : nextStageId === 'answer_generation'
           ? this.previewState.generationPreviewText
           : '';
+    const nextPreviewActive =
+      event.event_type === 'stage_preview' && event.stage_id === 'answer_generation'
+        ? true
+        : nextStageId === 'answer_generation'
+          ? this.previewState.generationPreviewActive
+          : false;
 
     this.previewState = {
       runId: event.run_id,
@@ -483,6 +502,8 @@ export class AppComponent {
       latestMessage: this.messageForEvent(event),
       latestSummaryRows: this.summaryRowsForEvent(event),
       generationPreviewText: nextPreviewText,
+      generationPreviewCycle: nextPreviewCycle,
+      generationPreviewActive: nextPreviewActive,
     };
   }
 
@@ -504,7 +525,13 @@ export class AppComponent {
 
   private messageForEvent(event: RunEvent): string {
     if (event.event_type === 'stage_preview') {
-      return 'Generation produced a bounded preview snapshot. Final verified answer will only appear after completion.';
+      return this.previewCycleForEvent(event) > 0
+        ? 'Verification restarted bounded generation preview. This text remains non-final until completion.'
+        : 'Generation preview updated. Final verified answer will only appear after completion.';
+    }
+
+    if (event.event_type === 'stage_progress' && event.stage_id === 'answer_verification') {
+      return event.message || 'Verification progress updated.';
     }
 
     return event.message || 'Pipeline activity updated.';
@@ -644,7 +671,33 @@ export class AppComponent {
       latestMessage: '',
       latestSummaryRows: [],
       generationPreviewText: '',
+      generationPreviewCycle: 0,
+      generationPreviewActive: false,
     };
+  }
+
+  private previewCycleForEvent(event: RunEvent): number {
+    const regenerationCycle = event.summary?.['regeneration_cycle'];
+    if (typeof regenerationCycle === 'number' && Number.isFinite(regenerationCycle)) {
+      return regenerationCycle;
+    }
+
+    if (event.event_type === 'stage_progress' && event.stage_id === 'answer_verification') {
+      const regenerationTriggered = event.summary?.['regeneration_triggered'];
+      if (regenerationTriggered === true) {
+        return 1;
+      }
+    }
+
+    if (event.event_type === 'stage_preview' && event.stage_id === 'answer_generation') {
+      return this.previewState.generationPreviewCycle;
+    }
+
+    if (event.stage_id !== 'answer_generation') {
+      return 0;
+    }
+
+    return this.previewState.generationPreviewCycle;
   }
 
   private boolLabel(value: boolean): string {

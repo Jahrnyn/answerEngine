@@ -11,13 +11,14 @@ Status:
 - the frontend now consumes that transport for non-final stage/activity preview on the main surface
 - richer stage-summary preview now exists for scope, retrieval, context, and verification
 - generation preview text now exists as non-final `answer_generation` output during active runs
-- the next implementation step is to refine preview transitions and inspectability further without weakening final verified answer semantics
+- preview transitions now clear or restart generation preview text correctly across verification, regeneration, and terminal outcomes
+- the next implementation step is to extend inspectability and preview polish further without weakening final verified answer semantics
 
 ---
 
 ## CURRENT GOAL
 
-Refine live run preview beyond initial generation preview text while preserving the verified-final-answer model.
+Refine live run preview beyond initial generation preview and transition correctness while preserving the verified-final-answer model.
 
 ---
 
@@ -28,7 +29,7 @@ Included:
 - staged live preview refinement
 - preservation of preview versus final answer semantics
 - minimal slices toward usable live run visibility
-- preview transition and inspectability refinement after generation preview text
+- inspectability refinement after preview transition correctness
 
 Excluded:
 - persistence

@@ -69,10 +69,10 @@
           <p class="running-copy">
             {{ previewState.latestMessage || 'The frontend is receiving bounded stage activity while the final verified answer is still in progress.' }}
           </p>
-          <div class="generation-preview" *ngIf="generationPreviewText">
+          <div class="generation-preview" *ngIf="isGenerationPreviewActive">
             <div class="generation-preview-header">
               <p class="meta-label">Generation preview</p>
-              <span class="preview-text-pill">Draft text</span>
+              <span class="preview-text-pill">{{ generationPreviewBadgeLabel }}</span>
             </div>
             <p class="generation-preview-copy">{{ generationPreviewText }}</p>
           </div>

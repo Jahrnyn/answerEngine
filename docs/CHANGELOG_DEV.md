@@ -75,3 +75,6 @@
 - Implemented Slice AS-5 with bounded `answer_generation` preview-text emission through the existing run-event and SSE transport path.
 - Added frontend rendering for non-final generation preview text during `running_preview`, keeping it visually distinct from the final verified answer and clearing it when the run moves past generation or completes.
 - Re-checked the frontend build, backend compile/import sanity, controlled sync execution, and controlled SSE transport locally; generation now emits multiple progressive preview events without changing final verified-answer semantics.
+- Implemented Slice AS-6 with explicit preview lifecycle cleanup so generation preview text is cleared or superseded when later stages take over, including regeneration and terminal cannot-answer paths.
+- Added bounded verification-driven regeneration signaling in the backend event stream so the frontend can restart preview state truthfully instead of leaving stale generation text looking final.
+- Re-checked the frontend build, backend compile/import sanity, and controlled SSE transition behavior locally for regeneration and cannot-answer paths; final verified-answer semantics remain unchanged.

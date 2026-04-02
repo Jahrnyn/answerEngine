@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from typing import Callable
 
 from answer_engine_backend.model_runtime import ModelRuntimeError, OllamaRuntime
 from answer_engine_backend.pipeline.models import (
@@ -51,6 +52,8 @@ class AnswerVerificationStage:
         answer_policy: AnswerPolicy,
         verification_stage_model: StageModelConfig,
         answer_generation_stage_model: StageModelConfig,
+        on_regeneration_started: Callable[[], None] | None = None,
+        regeneration_preview_sink: Callable[[str], None] | None = None,
     ) -> VerificationStageOutcome:
         initial_assessment = self._assess_candidate(
             query=query,
@@ -68,12 +71,15 @@ class AnswerVerificationStage:
             and answer_policy.allow_regeneration
             and context_pack.selected_chunks
         ):
+            if on_regeneration_started is not None:
+                on_regeneration_started()
             regenerated_answer = self.answer_generation_stage.execute(
                 query,
                 context_pack,
                 answer_policy,
                 answer_generation_stage_model,
                 self._build_regeneration_note(initial_assessment),
+                preview_sink=regeneration_preview_sink,
             )
             regenerated_answer.model_metadata["regeneration_attempt"] = 1
 

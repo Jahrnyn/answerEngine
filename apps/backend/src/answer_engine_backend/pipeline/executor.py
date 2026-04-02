@@ -292,6 +292,26 @@ class RunExecutor:
             )
         else:
             try:
+                def emit_regeneration_started() -> None:
+                    emit_event(
+                        "stage_progress",
+                        stage_id="answer_verification",
+                        message="Verification requested one bounded regeneration pass.",
+                        summary={"regeneration_triggered": True},
+                    )
+
+                def emit_regenerated_preview(preview_text: str) -> None:
+                    emit_event(
+                        "stage_preview",
+                        stage_id="answer_generation",
+                        message="Regenerated generation preview updated.",
+                        preview_text=preview_text[:800],
+                        summary={
+                            "preview_chars": min(len(preview_text), 800),
+                            "regeneration_cycle": 1,
+                        },
+                    )
+
                 verification_outcome = self.answer_verification_stage.execute(
                     query_analysis.normalized_query,
                     answer_result,
@@ -300,6 +320,8 @@ class RunExecutor:
                     answer_policy,
                     answer_verification_model,
                     answer_generation_model,
+                    on_regeneration_started=emit_regeneration_started,
+                    regeneration_preview_sink=emit_regenerated_preview,
                 )
                 answer_result = verification_outcome.answer_result
                 verification_result = verification_outcome.verification_result
