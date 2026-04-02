@@ -1,0 +1,12 @@
+{
+  "/runs": {
+    "target": "http://127.0.0.1:8761",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/health": {
+    "target": "http://127.0.0.1:8761",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

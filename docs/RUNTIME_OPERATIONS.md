@@ -21,6 +21,12 @@ This script is responsible for:
 - verifying CfHEE availability
 - starting backend and frontend processes
 
+Manual frontend entrypoint during development:
+
+- `cd apps/frontend`
+- `npm install`
+- `npm start`
+
 ---
 
 ## 3. Local development ports
@@ -104,7 +110,24 @@ Notes:
 
 ---
 
-## 8. Developer verification routes
+## 8. Frontend development surface
+
+Current frontend slice:
+
+- Angular standalone app under `apps/frontend`
+- dark main question/answer surface only
+- no inspect panel yet
+
+Current frontend dev behavior:
+
+- the Angular dev server runs on `http://127.0.0.1:8760`
+- the frontend proxies `/runs` and `/health` to the backend on `http://127.0.0.1:8761`
+- the main surface can submit a question to `POST /runs/execute`
+- returned final answer, certainty, limitations, and request failure state are rendered on the page
+
+---
+
+## 9. Developer verification routes
 
 The backend may expose narrow developer-oriented routes for checking local integration surfaces.
 

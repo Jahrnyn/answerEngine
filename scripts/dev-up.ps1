@@ -51,20 +51,47 @@ function Test-CommandAvailable {
 
 function Get-PythonLauncher {
     if (Test-CommandAvailable "py") {
-        return @{
-            Path = (Get-Command "py").Source
-            Args = @("-3.12")
+        try {
+            $installedVersions = & py -0 2>$null
+
+            foreach ($line in $installedVersions) {
+                if ($line -match '(\d+)\.(\d+)') {
+                    $major = [int]$Matches[1]
+                    $minor = [int]$Matches[2]
+
+                    if ($major -gt 3 -or ($major -eq 3 -and $minor -ge 12)) {
+                        return @{
+                            Path = (Get-Command "py").Source
+                            Args = @("-$major.$minor")
+                        }
+                    }
+                }
+            }
+        }
+        catch {
         }
     }
 
     if (Test-CommandAvailable "python") {
-        return @{
-            Path = (Get-Command "python").Source
-            Args = @()
+        try {
+            $pythonVersionOutput = & python --version 2>&1
+            if ($pythonVersionOutput -match 'Python (\d+)\.(\d+)\.(\d+)') {
+                $major = [int]$Matches[1]
+                $minor = [int]$Matches[2]
+
+                if ($major -gt 3 -or ($major -eq 3 -and $minor -ge 12)) {
+                    return @{
+                        Path = (Get-Command "python").Source
+                        Args = @()
+                    }
+                }
+            }
+        }
+        catch {
         }
     }
 
-    Fail "Python was not found. Install Python 3.12+ and make sure 'py' or 'python' is on PATH."
+    Fail "Python 3.12+ was not found. Install Python 3.12+ and make sure 'py' or 'python' is on PATH."
 }
 
 function Update-InstallMarker {

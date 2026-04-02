@@ -6,7 +6,7 @@
 
 The Answer Engine project is in **V0 early implementation state**.
 
-A minimal backend runtime foundation now exists.
+A minimal backend runtime foundation and initial frontend shell now exist.
 
 The system currently consists of:
 - architectural design
@@ -51,12 +51,15 @@ Status: PARTIALLY IMPLEMENTED
 ---
 
 ### 2.2 Frontend
-Status: NOT IMPLEMENTED
+Status: PARTIALLY IMPLEMENTED
 
-- No Angular project exists
-- No UI components exist
-- No question/answer surface is implemented
-- No trace/debug UI exists
+- Angular project exists under `apps/frontend`
+- Dark-theme baseline exists for V1
+- Main question/answer surface exists
+- Minimal frontend-to-backend call path exists for `/runs/execute`
+- Basic running, error, certainty, and limitations rendering exists
+- No inspect panel UI exists yet
+- No trace/debug UI exists yet
 
 ---
 
@@ -242,10 +245,8 @@ No production-ready behavior exists yet.
 - no answering API endpoints
 - no production-ready answering API endpoints
 - no fully verified live end-to-end answer pipeline yet
-- UI interaction
 - trace visualization
 - implemented chat/session capability
-- answer verification beyond stub behavior
 
 The following DO exist in minimal structural form:
 - `/health`
@@ -262,6 +263,7 @@ The following DO exist in minimal structural form:
 - practical V1 answer generation with central stage routing and local Ollama runtime integration
 - practical V1 answer verification with bounded combined evaluation and explicit regeneration trace visibility
 - practical V1 stage-attributed failure surfacing through `AnswerRun.errors`
+- Angular app shell with a dark main question/answer surface and thin `/runs/execute` integration
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -277,6 +279,9 @@ The following have been verified against the current live local CfHEE setup:
 - controlled local verification runs now produce real non-placeholder `verification_result` output, including explicit keep, regenerate, and cannot-answer style outcomes
 - live end-to-end `/runs/execute` has now been re-checked successfully again for at least one real query path (`bechtle crm`) after the CfHEE timeout hardening round
 - controlled timeout-path runs now return explicit `upstream_timeout` status and truthful cannot-answer output instead of surfacing as empty-evidence success
+- the frontend now builds successfully under `apps/frontend`
+- the frontend dev server has been re-checked on `http://127.0.0.1:8760`
+- the frontend dev proxy now reaches the backend `/runs/execute` route on `http://127.0.0.1:8761`
 
 Any assumption that these exist is incorrect.
 

@@ -35,3 +35,11 @@
 - Re-checked verification behavior locally with controlled runs, including explicit regeneration and cannot-answer paths; live end-to-end `/runs/execute` remained intermittently blocked in this round by upstream CfHEE retrieval timeouts before verification could complete.
 - Implemented Slice 9 with end-to-end backend stabilization focused on timeout and failure hardening: scope inference and retrieval execution now preserve explicit upstream timeout/unavailable/failure states, the backend returns truthful cannot-answer run output instead of collapsing those paths into no-evidence semantics, and stage-attributed `AnswerRun.errors` now surface important failures explicitly.
 - Increased the backend CfHEE timeout default to `10.0` seconds, re-checked the live `bechtle crm` path successfully, and verified controlled upstream-timeout behavior now returns explicit `upstream_timeout` run output and cannot-answer final responses.
+
+## 2026-04-02
+
+- Implemented Slice 10 with the first Angular frontend shell under `apps/frontend`.
+- Replaced the Angular starter template with a dark, run-centric main question/answer surface using standalone components.
+- Added a thin frontend API service for `POST /runs/execute` and wired the page to render running, answer, certainty, limitations, and request-failure states.
+- Added frontend dev-server proxying for `/runs` and `/health` to the backend on `http://127.0.0.1:8761`.
+- Verified the frontend build locally, verified the dev server on `http://127.0.0.1:8760`, and re-checked proxied `/runs/execute` calls through the frontend dev server against the live local backend.

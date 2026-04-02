@@ -130,27 +130,45 @@ Model selection is:
 
 ## Current State (V0.1)
 
-The project is in early backend development.
+The project is in early implementation with a practical bounded backend path and the first frontend shell.
 
 Currently implemented:
 
 - backend scaffold (FastAPI)
-- pipeline execution skeleton (`RunExecutor`)
-- deterministic Query Analysis
-- deterministic Answer Policy Resolution
-- CfHEE client foundation
-- stage model resolver skeleton
+- practical bounded `RunExecutor` pipeline through verification
+- CfHEE client foundation and live retrieval integration
+- stage model resolver with centralized development defaults
 - developer execution route (`/runs/execute`)
+- Angular frontend shell under `apps/frontend`
+- dark main question/answer surface with thin backend integration
 
 Not yet implemented:
 
-- real scope inference logic
-- retrieval orchestration
-- context assembly
-- answer generation
-- verification
-- frontend
+- inspect panel UI
+- conversation history or thread-first UX
 - persistence
+- production-ready API surface
+
+## Local Development
+
+Backend:
+
+```powershell
+cd apps/backend
+python -m uvicorn answer_engine_backend.main:app --host 127.0.0.1 --port 8761 --reload
+```
+
+Frontend:
+
+```powershell
+cd apps/frontend
+npm install
+npm start
+```
+
+Current dev ports:
+- frontend: `8760`
+- backend: `8761`
 
 ---
 

@@ -1,54 +1,56 @@
-# CURRENT_FOCUS — Answer Engine
+# CURRENT_FOCUS - Answer Engine
 
 ---
 
 ## CURRENT FOCUS
 
-End-to-end backend stabilization for the Answer Engine backend.
+Frontend inspectability and run-surface refinement for the Answer Engine UI.
 
 Status:
-- the backend now has a practical bounded candidate-answer path through verification
-- the next backend step is to stabilize end-to-end runtime behavior and final response behavior under live local dependencies
+- the Angular app shell and main question/answer surface now exist
+- the next frontend step is to expose inspectable run details without shifting the UI into a thread-first layout
 
 ---
 
 ## CURRENT GOAL
 
-Stabilize the first end-to-end bounded V1 answering path now that all core backend stages exist in practical form.
+Build the first inspect-oriented frontend extension on top of the working main question/answer surface.
 
 ---
 
 ## SCOPE
 
 Included:
-- live dependency re-checks across CfHEE and Ollama
-- tightening final response behavior where runtime truthfulness needs it
-- reducing instability in the dev execution path
+- inspect panel or side-surface work
+- sources, context, and trace visibility
+- clearer frontend surfacing of run outcomes and limitations
 
 Excluded:
-- major pipeline redesign
-- persistence layer
-- frontend
+- persistence
+- conversation history
+- backend redesign
 
 ---
 
 ## DONE WHEN
 
-- backend imports successfully
-- `/health` remains working
-- `/runs/execute` remains working
-- the full backend path is stable under the local development environment
-- remaining failures are explicit and traceable rather than hidden
+- the main question/answer surface remains working
+- inspect-oriented frontend visibility exists for at least the core run details
+- failure and limitation states remain explicit and easy to understand
 
 --- 
 
 ## NOT IN SCOPE
 
 - persistence
-- frontend development
+- chat-thread UX
+- major backend changes
 
 --- 
 
 ## NOTES
 
-This step should build confidence in the completed bounded V1 backend path before broader surface work begins.
+The UI must stay run-centric in V1:
+- main surface first
+- inspectability second
+- no thread-first product framing

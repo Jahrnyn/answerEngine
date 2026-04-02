@@ -1,0 +1,87 @@
+<main class="app-shell">
+  <section class="surface">
+    <header class="hero">
+      <p class="eyebrow">Answer Engine</p>
+      <h1>Main Question/Answer Surface</h1>
+      <p class="intro">
+        Ask one question, run the bounded answer pipeline, and review the verified result.
+      </p>
+    </header>
+
+    <form class="question-panel" (ngSubmit)="submitQuestion()">
+      <label class="field-label" for="question">Question</label>
+      <textarea
+        id="question"
+        name="question"
+        [(ngModel)]="question"
+        rows="6"
+        [disabled]="isSubmitting"
+        placeholder="Ask a grounded question, for example: What do we know about the Bechtle CRM rollout?"
+      ></textarea>
+
+      <div class="actions">
+        <button type="submit" class="primary-button" [disabled]="isSubmitDisabled">
+          {{ isSubmitting ? 'Running...' : 'Run Answer Engine' }}
+        </button>
+        <p class="status-text" *ngIf="isSubmitting">{{ runningStatus }}</p>
+      </div>
+    </form>
+
+    <section class="response-panel">
+      <div class="panel-header">
+        <h2>Answer</h2>
+        <span class="certainty-pill" *ngIf="certaintyLabel" [class.low]="certaintyLabel === 'low'" [class.uncertain]="certaintyLabel === 'uncertain'">
+          {{ certaintyLabel | titlecase }} certainty
+        </span>
+      </div>
+
+      <p class="empty-state" *ngIf="!isSubmitting && !hasRunResult && !requestError">
+        The first frontend slice shows the final answer surface only. Inspect, sources, and trace views come later.
+      </p>
+
+      <div class="running-panel" *ngIf="isSubmitting">
+        <p class="running-title">Run in progress</p>
+        <p class="running-copy">
+          The frontend waits for the backend to complete the current run before showing final answer text.
+        </p>
+      </div>
+
+      <div class="error-panel" *ngIf="requestError">
+        <p class="error-title">Request failed</p>
+        <p class="error-message">{{ requestError.message }}</p>
+        <p class="error-detail" *ngIf="requestError.detail">{{ requestError.detail }}</p>
+      </div>
+
+      <article class="answer-card" *ngIf="runResult">
+        <p class="answer-text">{{ answerText }}</p>
+
+        <section class="limitations" *ngIf="limitations.length > 0">
+          <h3>Limitations</h3>
+          <ul>
+            <li *ngFor="let limitation of limitations">{{ limitation }}</li>
+          </ul>
+        </section>
+
+        <section class="meta-grid">
+          <div class="meta-card">
+            <p class="meta-label">Verification decision</p>
+            <p class="meta-value">{{ verificationDecision | titlecase }}</p>
+          </div>
+          <div class="meta-card">
+            <p class="meta-label">Trace</p>
+            <p class="meta-value">{{ traceId }}</p>
+          </div>
+        </section>
+
+        <section class="run-errors" *ngIf="runErrors.length > 0">
+          <h3>Run errors</h3>
+          <ul>
+            <li *ngFor="let runError of runErrors">
+              <strong>{{ runError.stage }}</strong>: {{ runError.message }}
+            </li>
+          </ul>
+        </section>
+      </article>
+    </section>
+  </section>
+</main>
