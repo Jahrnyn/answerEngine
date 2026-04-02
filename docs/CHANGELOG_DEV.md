@@ -47,3 +47,7 @@
 - Added basic inspect-oriented rendering for run summary, scope, retrieval, verification, context preview, stage routing, timings, and stage-attributed errors.
 - Preserved the main question/answer surface as primary while making inspectability a secondary toggleable surface.
 - Re-checked the frontend build and verified the inspect-oriented payload path through the frontend dev proxy with a live timeout-path run response.
+- Implemented Slice 12 with a refined inspect side-panel experience that now behaves as a clearer secondary drawer rather than just extra detail blocks beside the main surface.
+- Added richer run visibility for total run time, primary scope, retrieval scopes, verification outcome, certainty, token visibility, context token estimate, routing, timings, trace id, and stage-attributed errors when those values are present in backend output.
+- Kept the main answer surface primary while promoting the inspect view into a more structured secondary diagnostics surface.
+- Re-checked the refined frontend build and verified the richer inspect path again through the frontend dev proxy with a live timeout-path run response.

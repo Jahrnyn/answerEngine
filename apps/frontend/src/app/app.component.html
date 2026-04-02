@@ -29,29 +29,37 @@
           [disabled]="!runResult && !isSubmitting"
           (click)="toggleInspectPanel()"
         >
-          {{ inspectOpen ? 'Hide Inspect' : 'Show Inspect' }}
+          {{ inspectOpen ? 'Hide Inspect' : 'Open Inspect' }}
         </button>
         <p class="status-text" *ngIf="isSubmitting">{{ runningStatus }}</p>
       </div>
     </form>
 
-    <section class="workspace" [class.with-inspect]="inspectOpen">
-      <section class="response-panel">
+    <section class="workspace">
+      <section class="response-panel" [class.dimmed]="inspectOpen">
         <div class="panel-header">
-          <h2>Answer</h2>
-          <span
-            class="certainty-pill"
-            *ngIf="certaintyLabel"
-            [class.low]="certaintyLabel === 'low'"
-            [class.uncertain]="certaintyLabel === 'uncertain'"
-          >
-            {{ certaintyLabel | titlecase }} certainty
-          </span>
+          <div class="panel-title-block">
+            <h2>Answer</h2>
+            <p class="panel-subtitle">Verified output stays primary. Inspectability remains secondary.</p>
+          </div>
+          <div class="panel-badges">
+            <span
+              class="certainty-pill"
+              *ngIf="certaintyLabel"
+              [class.low]="certaintyLabel === 'low'"
+              [class.uncertain]="certaintyLabel === 'uncertain'"
+            >
+              {{ certaintyLabel | titlecase }} certainty
+            </span>
+            <span class="decision-pill" *ngIf="runResult">
+              {{ verificationDecision | titlecase }}
+            </span>
+          </div>
         </div>
 
         <p class="empty-state" *ngIf="!isSubmitting && !hasRunResult && !requestError">
-          The main surface is ready. Open Inspect after a run to review scope, retrieval, verification, context,
-          and error details.
+          Submit a run to see the final answer here. Open Inspect to review scope, retrieval, verification,
+          timings, routing, tokens, context, and errors.
         </p>
 
         <div class="running-panel" *ngIf="isSubmitting">
@@ -77,14 +85,18 @@
             </ul>
           </section>
 
-          <section class="meta-grid">
+          <section class="summary-strip">
             <div class="meta-card">
-              <p class="meta-label">Verification decision</p>
-              <p class="meta-value">{{ verificationDecision | titlecase }}</p>
+              <p class="meta-label">Trace id</p>
+              <p class="meta-value">{{ traceId }}</p>
             </div>
             <div class="meta-card">
-              <p class="meta-label">Trace</p>
-              <p class="meta-value">{{ traceId }}</p>
+              <p class="meta-label">Run time</p>
+              <p class="meta-value">{{ runResult.timings.total_time_ms }} ms</p>
+            </div>
+            <div class="meta-card">
+              <p class="meta-label">Primary scope</p>
+              <p class="meta-value">{{ scopeLabel(scopeInference?.primary_scope) }}</p>
             </div>
           </section>
 
@@ -98,161 +110,242 @@
           </section>
         </article>
       </section>
+    </section>
+  </section>
 
-      <aside class="inspect-panel" *ngIf="inspectOpen">
-        <div class="inspect-header">
-          <div>
-            <p class="inspect-eyebrow">Inspect</p>
-            <h2>Run Details</h2>
-          </div>
-          <p class="inspect-copy">
-            Secondary V1 panel for trace-adjacent details. The main answer surface stays primary.
-          </p>
-        </div>
+  <button
+    type="button"
+    class="inspect-fab"
+    [class.open]="inspectOpen"
+    [disabled]="!runResult && !isSubmitting"
+    (click)="toggleInspectPanel()"
+  >
+    {{ inspectOpen ? 'Close Inspect' : 'Inspect Run' }}
+  </button>
 
-        <section class="inspect-section">
+  <div class="inspect-backdrop" *ngIf="inspectOpen" (click)="closeInspectPanel()"></div>
+
+  <aside class="inspect-drawer" *ngIf="inspectOpen">
+    <div class="inspect-header">
+      <div>
+        <p class="inspect-eyebrow">Inspect</p>
+        <h2>Run Diagnostics</h2>
+      </div>
+      <button type="button" class="drawer-close" (click)="closeInspectPanel()">Close</button>
+    </div>
+
+    <div class="inspect-scroll">
+      <section class="inspect-section">
+        <div class="inspect-section-header">
           <h3>Run Summary</h3>
-          <div class="inspect-grid" *ngIf="runResult; else noRunSummary">
-            <div class="inspect-card">
-              <p class="meta-label">Run id</p>
-              <p class="meta-value">{{ runResult.id }}</p>
-            </div>
-            <div class="inspect-card">
-              <p class="meta-label">Total time</p>
-              <p class="meta-value">{{ runResult.timings.total_time_ms }} ms</p>
-            </div>
+          <span class="section-badge" *ngIf="runResult">{{ traceId }}</span>
+        </div>
+        <div class="detail-list" *ngIf="runSummaryRows.length > 0; else noRunSummary">
+          <div class="detail-row" *ngFor="let row of runSummaryRows" [class.warn]="row.tone === 'warn'" [class.muted]="row.tone === 'muted'">
+            <span class="detail-label">{{ row.label }}</span>
+            <span class="detail-value">{{ row.value }}</span>
           </div>
-          <ng-template #noRunSummary>
-            <p class="inspect-empty">No run details yet. Submit a question to populate the inspect panel.</p>
-          </ng-template>
-        </section>
+        </div>
+        <ng-template #noRunSummary>
+          <p class="inspect-empty">No run details yet. Submit a question to populate the inspect panel.</p>
+        </ng-template>
+      </section>
 
-        <section class="inspect-section">
+      <section class="inspect-section">
+        <div class="inspect-section-header">
           <h3>Scope</h3>
-          <div *ngIf="scopeInference; else noScopeData">
-            <p class="inspect-line"><strong>Status:</strong> {{ scopeInference.status }}</p>
-            <p class="inspect-line"><strong>Primary scope:</strong> {{ scopeLabel(scopeInference.primary_scope) }}</p>
-            <p class="inspect-line" *ngIf="scopeInference.failure_reason">
-              <strong>Failure reason:</strong> {{ scopeInference.failure_reason }}
-            </p>
-            <p class="inspect-line" *ngIf="secondaryScopeSummary.length > 0">
-              <strong>Secondary scopes:</strong>
-              {{ secondaryScopeSummary.join(' | ') }}
-            </p>
+          <span class="section-badge" *ngIf="scopeInference">{{ scopeInference.status }}</span>
+        </div>
+        <div class="detail-list" *ngIf="scopeRows.length > 0; else noScopeData">
+          <div class="detail-row" *ngFor="let row of scopeRows" [class.warn]="row.tone === 'warn'" [class.muted]="row.tone === 'muted'">
+            <span class="detail-label">{{ row.label }}</span>
+            <span class="detail-value">{{ row.value }}</span>
           </div>
-          <ng-template #noScopeData>
-            <p class="inspect-empty">No scope data available for this run.</p>
-          </ng-template>
-        </section>
+          <div class="inspect-subsection">
+            <p class="meta-label">Secondary scopes</p>
+            <ul *ngIf="secondaryScopeSummary.length > 0; else noSecondaryScopes">
+              <li *ngFor="let scope of secondaryScopeSummary">{{ scope }}</li>
+            </ul>
+            <ng-template #noSecondaryScopes>
+              <p class="inspect-empty">No secondary scopes were retained for this run.</p>
+            </ng-template>
+          </div>
+        </div>
+        <ng-template #noScopeData>
+          <p class="inspect-empty">No scope data available for this run.</p>
+        </ng-template>
+      </section>
 
-        <section class="inspect-section">
+      <section class="inspect-section">
+        <div class="inspect-section-header">
           <h3>Retrieval</h3>
-          <div *ngIf="retrievalResult; else noRetrievalData">
-            <p class="inspect-line"><strong>Status:</strong> {{ retrievalResult.status }}</p>
-            <p class="inspect-line"><strong>Planned rounds:</strong> {{ retrievalPlan?.rounds?.length ?? 0 }}</p>
-            <p class="inspect-line"><strong>Aggregated results:</strong> {{ retrievalResult.aggregated_results.length }}</p>
+          <span class="section-badge" *ngIf="retrievalResult">{{ retrievalResult.status }}</span>
+        </div>
+        <div class="detail-list" *ngIf="retrievalRows.length > 0; else noRetrievalData">
+          <div class="detail-row" *ngFor="let row of retrievalRows" [class.warn]="row.tone === 'warn'" [class.muted]="row.tone === 'muted'">
+            <span class="detail-label">{{ row.label }}</span>
+            <span class="detail-value">{{ row.value }}</span>
+          </div>
+          <div class="inspect-subsection">
+            <p class="meta-label">Retrieval scopes used</p>
+            <ul *ngIf="retrievalScopeSummary.length > 0; else noRetrievalScopes">
+              <li *ngFor="let scope of retrievalScopeSummary">{{ scope }}</li>
+            </ul>
+            <ng-template #noRetrievalScopes>
+              <p class="inspect-empty">No retrieval scopes were executed for this run.</p>
+            </ng-template>
+          </div>
+          <div class="inspect-subsection">
+            <p class="meta-label">Round summary</p>
             <ul *ngIf="retrievalRoundSummary.length > 0; else noRetrievalRounds">
               <li *ngFor="let round of retrievalRoundSummary">{{ round }}</li>
             </ul>
             <ng-template #noRetrievalRounds>
-              <p class="inspect-empty">No retrieval rounds were executed for this run.</p>
+              <p class="inspect-empty">No retrieval round summaries are available.</p>
             </ng-template>
           </div>
-          <ng-template #noRetrievalData>
-            <p class="inspect-empty">No retrieval data available for this run.</p>
-          </ng-template>
-        </section>
+        </div>
+        <ng-template #noRetrievalData>
+          <p class="inspect-empty">No retrieval data available for this run.</p>
+        </ng-template>
+      </section>
 
-        <section class="inspect-section">
+      <section class="inspect-section">
+        <div class="inspect-section-header">
+          <h3>Generation</h3>
+          <span class="section-badge" *ngIf="runResult">{{ runResult.answer_result.answer_text ? 'answer present' : 'no answer text' }}</span>
+        </div>
+        <div class="detail-list" *ngIf="generationRows.length > 0; else noGenerationData">
+          <div class="detail-row" *ngFor="let row of generationRows" [class.warn]="row.tone === 'warn'" [class.muted]="row.tone === 'muted'">
+            <span class="detail-label">{{ row.label }}</span>
+            <span class="detail-value">{{ row.value }}</span>
+          </div>
+          <div class="inspect-subsection">
+            <p class="meta-label">Model metadata</p>
+            <div class="detail-list compact" *ngIf="modelMetadataRows.length > 0; else noModelMetadata">
+              <div class="detail-row" *ngFor="let row of modelMetadataRows">
+                <span class="detail-label">{{ row.label }}</span>
+                <span class="detail-value">{{ row.value }}</span>
+              </div>
+            </div>
+            <ng-template #noModelMetadata>
+              <p class="inspect-empty">No model metadata was returned for this run.</p>
+            </ng-template>
+          </div>
+        </div>
+        <ng-template #noGenerationData>
+          <p class="inspect-empty">No generation data available for this run.</p>
+        </ng-template>
+      </section>
+
+      <section class="inspect-section">
+        <div class="inspect-section-header">
           <h3>Verification</h3>
-          <div *ngIf="verificationResult; else noVerificationData">
-            <p class="inspect-line"><strong>Decision:</strong> {{ verificationResult.decision }}</p>
-            <p class="inspect-line"><strong>Grounded:</strong> {{ verificationResult.grounded }}</p>
-            <p class="inspect-line"><strong>Scope consistent:</strong> {{ verificationResult.scope_consistency_ok }}</p>
-            <p class="inspect-line"><strong>Coverage ok:</strong> {{ verificationResult.coverage_ok }}</p>
-            <p class="inspect-line"><strong>Adequacy ok:</strong> {{ verificationResult.adequacy_ok }}</p>
-            <p class="inspect-line"><strong>Confidence:</strong> {{ verificationResult.confidence_score }}</p>
-            <p class="inspect-line" *ngIf="verificationResult.regeneration_attempted">
-              <strong>Regeneration attempted:</strong> true
-            </p>
-            <ul *ngIf="verificationResult.uncertainty_flags.length > 0">
-              <li *ngFor="let flag of verificationResult.uncertainty_flags">{{ flag }}</li>
+          <span class="section-badge" *ngIf="verificationResult">{{ verificationDecision }}</span>
+        </div>
+        <div class="detail-list" *ngIf="verificationRows.length > 0; else noVerificationData">
+          <div class="detail-row" *ngFor="let row of verificationRows" [class.warn]="row.tone === 'warn'" [class.muted]="row.tone === 'muted'">
+            <span class="detail-label">{{ row.label }}</span>
+            <span class="detail-value">{{ row.value }}</span>
+          </div>
+          <div class="inspect-subsection">
+            <p class="meta-label">Uncertainty flags</p>
+            <ul *ngIf="verificationResult?.uncertainty_flags?.length; else noUncertaintyFlags">
+              <li *ngFor="let flag of verificationResult?.uncertainty_flags">{{ flag }}</li>
             </ul>
+            <ng-template #noUncertaintyFlags>
+              <p class="inspect-empty">No uncertainty flags were returned.</p>
+            </ng-template>
           </div>
-          <ng-template #noVerificationData>
-            <p class="inspect-empty">No verification data available for this run.</p>
-          </ng-template>
-        </section>
+        </div>
+        <ng-template #noVerificationData>
+          <p class="inspect-empty">No verification data available for this run.</p>
+        </ng-template>
+      </section>
 
-        <section class="inspect-section">
-          <h3>Context Preview</h3>
-          <div *ngIf="contextPack; else noContextData">
-            <p class="inspect-line"><strong>Selected chunks:</strong> {{ contextPack.selected_chunks.length }}</p>
-            <p class="inspect-line"><strong>Token estimate:</strong> {{ contextPack.token_estimate }}</p>
-            <div class="inspect-subsection">
-              <p class="meta-label">Structured context</p>
-              <p class="code-preview">{{ previewText(contextPack.structured_context, 420) }}</p>
-            </div>
-            <div class="inspect-subsection">
-              <p class="meta-label">Selected chunk preview</p>
-              <ul *ngIf="selectedChunkPreview.length > 0; else noSelectedChunks">
-                <li *ngFor="let chunk of selectedChunkPreview">{{ chunk }}</li>
-              </ul>
-              <ng-template #noSelectedChunks>
-                <p class="inspect-empty">No selected chunks available.</p>
-              </ng-template>
-            </div>
-            <div class="inspect-subsection">
-              <p class="meta-label">Source mapping</p>
-              <ul *ngIf="sourceMappingPreview.length > 0; else noSourceMapping">
-                <li *ngFor="let source of sourceMappingPreview">{{ source }}</li>
-              </ul>
-              <ng-template #noSourceMapping>
-                <p class="inspect-empty">No source mapping available.</p>
-              </ng-template>
+      <section class="inspect-section">
+        <div class="inspect-section-header">
+          <h3>Context</h3>
+          <span class="section-badge" *ngIf="contextPack">{{ contextPack.token_estimate }} tokens</span>
+        </div>
+        <div class="detail-list" *ngIf="contextRows.length > 0; else noContextData">
+          <div class="detail-row" *ngFor="let row of contextRows" [class.warn]="row.tone === 'warn'" [class.muted]="row.tone === 'muted'">
+            <span class="detail-label">{{ row.label }}</span>
+            <span class="detail-value">{{ row.value }}</span>
+          </div>
+          <div class="inspect-subsection">
+            <p class="meta-label">Structured context</p>
+            <p class="code-preview">{{ previewText(contextPack?.structured_context, 420) }}</p>
+          </div>
+          <div class="inspect-subsection">
+            <p class="meta-label">Selected chunk preview</p>
+            <ul *ngIf="selectedChunkPreview.length > 0; else noSelectedChunks">
+              <li *ngFor="let chunk of selectedChunkPreview">{{ chunk }}</li>
+            </ul>
+            <ng-template #noSelectedChunks>
+              <p class="inspect-empty">No selected chunks are available.</p>
+            </ng-template>
+          </div>
+          <div class="inspect-subsection">
+            <p class="meta-label">Source mapping</p>
+            <ul *ngIf="sourceMappingPreview.length > 0; else noSourceMapping">
+              <li *ngFor="let source of sourceMappingPreview">{{ source }}</li>
+            </ul>
+            <ng-template #noSourceMapping>
+              <p class="inspect-empty">No source mapping is available.</p>
+            </ng-template>
+          </div>
+        </div>
+        <ng-template #noContextData>
+          <p class="inspect-empty">No context pack is available for this run.</p>
+        </ng-template>
+      </section>
+
+      <section class="inspect-section">
+        <div class="inspect-section-header">
+          <h3>Routing and Timings</h3>
+          <span class="section-badge">{{ stageTimes.length }} stage(s)</span>
+        </div>
+        <div class="inspect-subsection">
+          <p class="meta-label">Stage model routing</p>
+          <div class="detail-list compact" *ngIf="routingRows.length > 0; else noRoutingData">
+            <div class="detail-row" *ngFor="let row of routingRows">
+              <span class="detail-label">{{ row.label }}</span>
+              <span class="detail-value">{{ row.value }}</span>
             </div>
           </div>
-          <ng-template #noContextData>
-            <p class="inspect-empty">No context pack available for this run.</p>
-          </ng-template>
-        </section>
-
-        <section class="inspect-section">
-          <h3>Model Routing</h3>
-          <ul *ngIf="stageModelRouting.length > 0; else noRoutingData">
-            <li *ngFor="let route of stageModelRouting">
-              <strong>{{ route.stage_id }}</strong>: {{ route.provider_id }} / {{ route.model_id }}
-            </li>
-          </ul>
           <ng-template #noRoutingData>
-            <p class="inspect-empty">No stage routing data available for this run.</p>
+            <p class="inspect-empty">No stage routing data is available.</p>
           </ng-template>
-        </section>
-
-        <section class="inspect-section">
-          <h3>Stage Timings</h3>
-          <ul *ngIf="stageTimes.length > 0; else noTimingData">
-            <li *ngFor="let stageTime of stageTimes">
-              <strong>{{ stageTime.stage }}</strong>: {{ stageTime.durationMs }} ms
-            </li>
-          </ul>
+        </div>
+        <div class="inspect-subsection">
+          <p class="meta-label">Stage timings</p>
+          <div class="detail-list compact" *ngIf="stageTimes.length > 0; else noTimingData">
+            <div class="detail-row" *ngFor="let stageTime of stageTimes">
+              <span class="detail-label">{{ stageTime.stage }}</span>
+              <span class="detail-value">{{ stageTime.durationMs }} ms</span>
+            </div>
+          </div>
           <ng-template #noTimingData>
-            <p class="inspect-empty">No stage timings available for this run.</p>
+            <p class="inspect-empty">No stage timings are available.</p>
           </ng-template>
-        </section>
+        </div>
+      </section>
 
-        <section class="inspect-section">
+      <section class="inspect-section">
+        <div class="inspect-section-header">
           <h3>Errors</h3>
-          <ul *ngIf="runErrors.length > 0; else noRunErrors">
-            <li *ngFor="let runError of runErrors">
-              <strong>{{ runError.stage }}</strong>: {{ runError.category }} — {{ runError.message }}
-            </li>
-          </ul>
-          <ng-template #noRunErrors>
-            <p class="inspect-empty">No stage-attributed errors recorded for this run.</p>
-          </ng-template>
-        </section>
-      </aside>
-    </section>
-  </section>
+          <span class="section-badge" *ngIf="runErrors.length > 0">{{ runErrors.length }}</span>
+        </div>
+        <ul *ngIf="runErrors.length > 0; else noRunErrors">
+          <li *ngFor="let runError of runErrors">
+            <strong>{{ runError.stage }}</strong>: {{ runError.category }} - {{ runError.message }}
+          </li>
+        </ul>
+        <ng-template #noRunErrors>
+          <p class="inspect-empty">No stage-attributed errors were recorded for this run.</p>
+        </ng-template>
+      </section>
+    </div>
+  </aside>
 </main>

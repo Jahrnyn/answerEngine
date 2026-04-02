@@ -58,8 +58,8 @@ Status: PARTIALLY IMPLEMENTED
 - Main question/answer surface exists
 - Minimal frontend-to-backend call path exists for `/runs/execute`
 - Basic running, error, certainty, and limitations rendering exists
-- Optional inspect panel shell exists
-- Basic trace-oriented rendering exists for scope, retrieval, verification, context preview, stage routing, timings, and errors
+- Optional inspect side-panel exists as a real secondary drawer-style surface
+- Richer trace-oriented rendering exists for scope, retrieval, verification, context preview, stage routing, timings, token visibility, and errors
 - No advanced trace/debug explorer exists yet
 
 ---
@@ -264,7 +264,7 @@ The following DO exist in minimal structural form:
 - practical V1 answer verification with bounded combined evaluation and explicit regeneration trace visibility
 - practical V1 stage-attributed failure surfacing through `AnswerRun.errors`
 - Angular app shell with a dark main question/answer surface and thin `/runs/execute` integration
-- optional inspect panel shell with basic run-detail rendering
+- optional inspect drawer with richer run-detail rendering
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -284,6 +284,7 @@ The following have been verified against the current live local CfHEE setup:
 - the frontend dev server has been re-checked on `http://127.0.0.1:8760`
 - the frontend dev proxy now reaches the backend `/runs/execute` route on `http://127.0.0.1:8761`
 - the frontend inspect panel shell has been re-checked against a live timeout-path run payload and now renders practical trace-adjacent data sections from the backend run output
+- the refined inspect side-panel has been re-checked against a live timeout-path run payload and now surfaces run time, scope status, retrieval status, verification decision, token visibility, timings, routing, and errors more prominently
 
 Any assumption that these exist is incorrect.
 

@@ -4,26 +4,26 @@
 
 ## CURRENT FOCUS
 
-Frontend inspectability refinement on top of the run-centric V1 surface.
+Frontend run-detail polish on top of the run-centric V1 surface.
 
 Status:
-- the Angular app shell, main question/answer surface, and initial inspect panel shell now exist
-- the next frontend step is to make inspectability more useful without turning the UI into a thread-first workbench
+- the Angular app shell, main question/answer surface, and refined inspect side-panel now exist
+- the next frontend step is to make source and context details easier to review without overbuilding a full trace explorer
 
 ---
 
 ## CURRENT GOAL
 
-Refine the inspect-oriented frontend surface so sources, context, and run details become easier to review during normal development use.
+Refine the inspect-oriented frontend surface so source-backed context details and trace-adjacent review become easier to use during normal development.
 
 ---
 
 ## SCOPE
 
 Included:
-- inspect panel refinement
-- clearer sources and context visibility
-- better trace-adjacent readability in the frontend
+- source and context visibility refinement
+- inspect-panel readability improvements
+- clearer presentation of run diagnostics already present in backend output
 
 Excluded:
 - persistence
@@ -36,9 +36,9 @@ Excluded:
 
 - the main question/answer surface remains working
 - inspect-oriented frontend visibility is useful for routine debugging and review
-- failure and limitation states remain explicit and easy to understand
+- source and context details are easier to scan without weakening the run-centric main surface
 
---- 
+---
 
 ## NOT IN SCOPE
 
@@ -46,7 +46,7 @@ Excluded:
 - chat-thread UX
 - major backend changes
 
---- 
+---
 
 ## NOTES
 
