@@ -115,8 +115,8 @@ Notes:
 Current frontend slice:
 
 - Angular standalone app under `apps/frontend`
-- dark main question/answer surface only
-- no inspect panel yet
+- dark main question/answer surface
+- optional inspect panel shell with basic run-detail rendering
 
 Current frontend dev behavior:
 
@@ -124,6 +124,7 @@ Current frontend dev behavior:
 - the frontend proxies `/runs` and `/health` to the backend on `http://127.0.0.1:8761`
 - the main surface can submit a question to `POST /runs/execute`
 - returned final answer, certainty, limitations, and request failure state are rendered on the page
+- the inspect panel can render run summary, scope, retrieval, verification, context preview, routing, timings, and error details when a run payload is present
 
 ---
 

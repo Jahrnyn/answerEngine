@@ -4,26 +4,26 @@
 
 ## CURRENT FOCUS
 
-Frontend inspectability and run-surface refinement for the Answer Engine UI.
+Frontend inspectability refinement on top of the run-centric V1 surface.
 
 Status:
-- the Angular app shell and main question/answer surface now exist
-- the next frontend step is to expose inspectable run details without shifting the UI into a thread-first layout
+- the Angular app shell, main question/answer surface, and initial inspect panel shell now exist
+- the next frontend step is to make inspectability more useful without turning the UI into a thread-first workbench
 
 ---
 
 ## CURRENT GOAL
 
-Build the first inspect-oriented frontend extension on top of the working main question/answer surface.
+Refine the inspect-oriented frontend surface so sources, context, and run details become easier to review during normal development use.
 
 ---
 
 ## SCOPE
 
 Included:
-- inspect panel or side-surface work
-- sources, context, and trace visibility
-- clearer frontend surfacing of run outcomes and limitations
+- inspect panel refinement
+- clearer sources and context visibility
+- better trace-adjacent readability in the frontend
 
 Excluded:
 - persistence
@@ -35,7 +35,7 @@ Excluded:
 ## DONE WHEN
 
 - the main question/answer surface remains working
-- inspect-oriented frontend visibility exists for at least the core run details
+- inspect-oriented frontend visibility is useful for routine debugging and review
 - failure and limitation states remain explicit and easy to understand
 
 --- 

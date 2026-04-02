@@ -43,3 +43,7 @@
 - Added a thin frontend API service for `POST /runs/execute` and wired the page to render running, answer, certainty, limitations, and request-failure states.
 - Added frontend dev-server proxying for `/runs` and `/health` to the backend on `http://127.0.0.1:8761`.
 - Verified the frontend build locally, verified the dev server on `http://127.0.0.1:8760`, and re-checked proxied `/runs/execute` calls through the frontend dev server against the live local backend.
+- Implemented Slice 11 with an optional inspect panel shell for the Angular frontend.
+- Added basic inspect-oriented rendering for run summary, scope, retrieval, verification, context preview, stage routing, timings, and stage-attributed errors.
+- Preserved the main question/answer surface as primary while making inspectability a secondary toggleable surface.
+- Re-checked the frontend build and verified the inspect-oriented payload path through the frontend dev proxy with a live timeout-path run response.

@@ -58,8 +58,9 @@ Status: PARTIALLY IMPLEMENTED
 - Main question/answer surface exists
 - Minimal frontend-to-backend call path exists for `/runs/execute`
 - Basic running, error, certainty, and limitations rendering exists
-- No inspect panel UI exists yet
-- No trace/debug UI exists yet
+- Optional inspect panel shell exists
+- Basic trace-oriented rendering exists for scope, retrieval, verification, context preview, stage routing, timings, and errors
+- No advanced trace/debug explorer exists yet
 
 ---
 
@@ -245,7 +246,6 @@ No production-ready behavior exists yet.
 - no answering API endpoints
 - no production-ready answering API endpoints
 - no fully verified live end-to-end answer pipeline yet
-- trace visualization
 - implemented chat/session capability
 
 The following DO exist in minimal structural form:
@@ -264,6 +264,7 @@ The following DO exist in minimal structural form:
 - practical V1 answer verification with bounded combined evaluation and explicit regeneration trace visibility
 - practical V1 stage-attributed failure surfacing through `AnswerRun.errors`
 - Angular app shell with a dark main question/answer surface and thin `/runs/execute` integration
+- optional inspect panel shell with basic run-detail rendering
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -282,6 +283,7 @@ The following have been verified against the current live local CfHEE setup:
 - the frontend now builds successfully under `apps/frontend`
 - the frontend dev server has been re-checked on `http://127.0.0.1:8760`
 - the frontend dev proxy now reaches the backend `/runs/execute` route on `http://127.0.0.1:8761`
+- the frontend inspect panel shell has been re-checked against a live timeout-path run payload and now renders practical trace-adjacent data sections from the backend run output
 
 Any assumption that these exist is incorrect.
 

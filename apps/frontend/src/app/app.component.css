@@ -11,7 +11,7 @@
 }
 
 .surface {
-  max-width: 1040px;
+  max-width: 1320px;
   margin: 0 auto;
   display: grid;
   gap: 24px;
@@ -19,7 +19,8 @@
 
 .hero,
 .question-panel,
-.response-panel {
+.response-panel,
+.inspect-panel {
   background: var(--color-bg-panel);
   border: 1px solid var(--color-border-subtle);
   border-radius: 16px;
@@ -30,7 +31,8 @@
   padding: 28px;
 }
 
-.eyebrow {
+.eyebrow,
+.inspect-eyebrow {
   margin: 0 0 8px;
   color: var(--color-text-muted);
   font-size: 12px;
@@ -51,6 +53,16 @@ h1 {
   line-height: 1.15;
 }
 
+h2 {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: 15px;
+  line-height: 1.3;
+}
+
 .intro {
   margin-top: 12px;
   max-width: 720px;
@@ -59,7 +71,8 @@ h1 {
 }
 
 .question-panel,
-.response-panel {
+.response-panel,
+.inspect-panel {
   padding: 24px;
 }
 
@@ -103,19 +116,24 @@ textarea::placeholder {
   align-items: center;
   gap: 16px;
   margin-top: 16px;
+  flex-wrap: wrap;
 }
 
-.primary-button {
+.primary-button,
+.secondary-button {
   appearance: none;
-  border: 0;
   border-radius: 999px;
   padding: 12px 18px;
-  background: var(--color-accent);
-  color: var(--color-text-primary);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 120ms ease-in-out, transform 120ms ease-in-out;
+  transition: background-color 120ms ease-in-out, transform 120ms ease-in-out, border-color 120ms ease-in-out;
+}
+
+.primary-button {
+  border: 0;
+  background: var(--color-accent);
+  color: var(--color-text-primary);
 }
 
 .primary-button:hover:not(:disabled) {
@@ -123,9 +141,32 @@ textarea::placeholder {
   transform: translateY(-1px);
 }
 
-.primary-button:disabled {
+.secondary-button {
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.secondary-button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
+.workspace.with-inspect {
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
+  align-items: start;
 }
 
 .status-text,
@@ -134,17 +175,32 @@ textarea::placeholder {
 .error-message,
 .error-detail,
 .answer-text,
-.meta-value {
+.meta-value,
+.inspect-copy,
+.inspect-line,
+.inspect-empty,
+.code-preview {
   color: var(--color-text-secondary);
   line-height: 1.6;
 }
 
-.panel-header {
+.panel-header,
+.inspect-header {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 20px;
+}
+
+.inspect-header {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.inspect-copy {
+  max-width: 320px;
+  font-size: 14px;
 }
 
 .certainty-pill {
@@ -170,7 +226,8 @@ textarea::placeholder {
 
 .running-panel,
 .error-panel,
-.answer-card {
+.answer-card,
+.inspect-panel {
   display: grid;
   gap: 14px;
 }
@@ -195,7 +252,6 @@ textarea::placeholder {
 .limitations h3,
 .run-errors h3 {
   margin-bottom: 10px;
-  font-size: 15px;
 }
 
 ul {
@@ -208,13 +264,16 @@ li + li {
   margin-top: 6px;
 }
 
-.meta-grid {
+.meta-grid,
+.inspect-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
-.meta-card {
+.meta-card,
+.inspect-card,
+.inspect-section {
   padding: 14px 16px;
   border-radius: 14px;
   background: var(--color-bg-elevated);
@@ -226,19 +285,59 @@ li + li {
   color: var(--color-text-primary);
 }
 
+.inspect-panel {
+  position: sticky;
+  top: 24px;
+}
+
+.inspect-section {
+  display: grid;
+  gap: 10px;
+}
+
+.inspect-subsection {
+  display: grid;
+  gap: 8px;
+}
+
+.inspect-line strong {
+  color: var(--color-text-primary);
+}
+
+.code-preview {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(8, 13, 20, 0.65);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 1100px) {
+  .workspace.with-inspect {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inspect-panel {
+    position: static;
+  }
+}
+
 @media (max-width: 720px) {
   .app-shell {
     padding: 20px 14px;
   }
 
-  .actions,
   .panel-header,
-  .meta-grid {
+  .inspect-header,
+  .meta-grid,
+  .inspect-grid {
     grid-template-columns: 1fr;
   }
 
-  .actions,
-  .panel-header {
+  .panel-header,
+  .inspect-header {
     display: grid;
   }
 }
