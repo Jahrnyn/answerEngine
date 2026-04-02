@@ -4,6 +4,7 @@ import json
 import re
 import socket
 from dataclasses import dataclass
+from typing import Callable
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -88,6 +89,8 @@ class OllamaRuntime:
         self,
         stage_config: StageModelConfig,
         prompt: str,
+        *,
+        preview_sink: Callable[[str], None] | None = None,
     ) -> ModelGenerationOutput:
         resolved_config = self.resolve_stage_model(stage_config)
         if resolved_config.provider_id != "ollama":
@@ -103,18 +106,25 @@ class OllamaRuntime:
                 ),
             )
 
-        response = self._request_json(
-            "POST",
-            "/api/generate",
-            {
-                "model": resolved_config.model_id,
-                "prompt": prompt,
-                "stream": False,
-                "options": self._build_options(resolved_config.parameters),
-            },
-        )
+        if preview_sink is None:
+            response = self._request_json(
+                "POST",
+                "/api/generate",
+                {
+                    "model": resolved_config.model_id,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": self._build_options(resolved_config.parameters),
+                },
+            )
+            answer_text = self._sanitize_answer_text(str(response.get("response", "")))
+        else:
+            response, answer_text = self._stream_generate(
+                resolved_config,
+                prompt,
+                preview_sink,
+            )
 
-        answer_text = self._sanitize_answer_text(str(response.get("response", "")))
         if not answer_text:
             raise ModelRuntimeError(
                 message="Ollama returned an empty answer response.",
@@ -151,6 +161,95 @@ class OllamaRuntime:
                 "done_reason": str(response.get("done_reason", "unknown")),
             },
         )
+
+    def _stream_generate(
+        self,
+        resolved_config: StageModelConfig,
+        prompt: str,
+        preview_sink: Callable[[str], None],
+    ) -> tuple[dict, str]:
+        url = f"{self._base_url}/api/generate"
+        payload = {
+            "model": resolved_config.model_id,
+            "prompt": prompt,
+            "stream": True,
+            "options": self._build_options(resolved_config.parameters),
+        }
+        data = json.dumps(payload).encode("utf-8")
+        request = Request(
+            url=url,
+            data=data,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+
+        accumulated = ""
+        last_emitted = ""
+        final_payload: dict | None = None
+        try:
+            with urlopen(request, timeout=self._timeout_seconds) as response:
+                for raw_line in response:
+                    line = raw_line.decode("utf-8", errors="replace").strip()
+                    if not line:
+                        continue
+
+                    try:
+                        chunk = json.loads(line)
+                    except json.JSONDecodeError as error:
+                        raise ModelRuntimeError(
+                            message="Ollama returned invalid streaming JSON.",
+                            status_code=502,
+                            endpoint="/api/generate",
+                            body=line,
+                        ) from error
+
+                    accumulated += str(chunk.get("response", ""))
+                    preview_text = self._sanitize_answer_text(accumulated)
+                    if self._should_emit_preview(last_emitted, preview_text, bool(chunk.get("done", False))):
+                        preview_sink(preview_text)
+                        last_emitted = preview_text
+
+                    if chunk.get("done", False):
+                        final_payload = chunk
+                        break
+        except HTTPError as error:
+            body = error.read().decode("utf-8", errors="replace")
+            raise ModelRuntimeError(
+                message="Ollama returned an error response.",
+                status_code=error.code,
+                endpoint="/api/generate",
+                body=body or None,
+            ) from error
+        except URLError as error:
+            raise ModelRuntimeError(
+                message=f"Ollama request failed: {error.reason}",
+                status_code=503,
+                endpoint="/api/generate",
+            ) from error
+        except TimeoutError as error:
+            raise ModelRuntimeError(
+                message="Ollama request timed out.",
+                status_code=504,
+                endpoint="/api/generate",
+            ) from error
+        except socket.timeout as error:
+            raise ModelRuntimeError(
+                message="Ollama request timed out.",
+                status_code=504,
+                endpoint="/api/generate",
+            ) from error
+
+        if final_payload is None:
+            raise ModelRuntimeError(
+                message="Ollama stream ended without a terminal payload.",
+                status_code=502,
+                endpoint="/api/generate",
+            )
+
+        return final_payload, self._sanitize_answer_text(accumulated)
 
     def _request_json(self, method: str, path: str, payload: dict | None = None) -> dict:
         url = f"{self._base_url}{path}"
@@ -237,6 +336,14 @@ class OllamaRuntime:
             answer_text,
         )
         return without_reasoning.strip()
+
+    def _should_emit_preview(self, previous: str, current: str, done: bool) -> bool:
+        if not current or current == previous:
+            return False
+        if done:
+            return True
+        growth = len(current) - len(previous)
+        return growth >= 80 or current.endswith((".", "!", "?", ":", "\n"))
 
     def _as_int(self, value: object) -> int | None:
         try:

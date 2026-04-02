@@ -126,6 +126,7 @@ Current frontend dev behavior:
 - the main surface now starts runs through `POST /runs/stream`
 - the frontend consumes bounded SSE run events for live stage/activity preview while the run is active
 - the running preview now shows richer bounded stage summaries for scope inference, retrieval execution, context assembly, and answer verification
+- the main surface may now also show bounded generation preview text while `answer_generation` is active
 - the main surface transitions into the existing final result view only after the terminal completion event arrives
 - returned final answer, certainty, verification decision, limitations, request failure state, and top run summary details are rendered on the page
 - the inspect side-panel can be opened or closed explicitly
@@ -136,8 +137,8 @@ Current backend active-stream note:
 - `POST /runs/stream` may now emit bounded run events over SSE
 - the frontend now consumes those events for a non-final running-preview shell on the main surface
 - stage-completed summaries for scope, retrieval, context, and verification are now rich enough to support more informative live preview state
+- generation preview text may now be streamed as bounded non-final `answer_generation` preview output
 - this still does not imply unverified final-answer streaming
-- generation preview text streaming is not implemented yet
 
 ---
 

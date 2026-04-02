@@ -238,11 +238,21 @@ class RunExecutor:
             )
         else:
             try:
+                def emit_generation_preview(preview_text: str) -> None:
+                    emit_event(
+                        "stage_preview",
+                        stage_id="answer_generation",
+                        message="Generation preview updated.",
+                        preview_text=preview_text[:800],
+                        summary={"preview_chars": min(len(preview_text), 800)},
+                    )
+
                 answer_result = self.answer_generation_stage.execute(
                     query_analysis.normalized_query,
                     context_pack,
                     answer_policy,
                     answer_generation_model,
+                    preview_sink=emit_generation_preview,
                 )
             except ModelRuntimeError as error:
                 errors.append(
@@ -258,14 +268,6 @@ class RunExecutor:
                     message=error.message,
                 )
         timer.end_stage("answer_generation")
-        if answer_result.answer_text:
-            emit_event(
-                "stage_preview",
-                stage_id="answer_generation",
-                message="Bounded answer preview snapshot.",
-                preview_text=answer_result.answer_text[:200],
-                summary={"preview_chars": min(len(answer_result.answer_text), 200)},
-            )
         emit_event(
             "stage_completed",
             stage_id="answer_generation",

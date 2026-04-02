@@ -162,9 +162,9 @@ Style:
 - source-backed output should feel primary
 - limitations or uncertainty must be visible without opening inspect mode
 - the final answer surface should display verified output only
-- do not present draft, preview, or provisional answer text in V1
+- during running preview, bounded generation preview text may be shown if it is clearly marked as non-final and is replaced by the final verified result on completion
 
----
+--- 
 
 ### Optional Conversation Support
 

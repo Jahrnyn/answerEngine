@@ -196,4 +196,24 @@ describe('AppComponent', () => {
     expect(compiled.textContent).toContain('Retrieval execution started.');
     expect(compiled.querySelector('.answer-card')).toBeNull();
   });
+
+  it('should render generation preview text only in the running preview state', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    app.runViewState = 'running_preview';
+    app.previewState = {
+      runId: 'run-preview',
+      currentStageId: 'answer_generation',
+      currentStageLabel: 'Answer Generation',
+      latestMessage: 'Generation preview updated.',
+      latestSummaryRows: [{ label: 'Preview chars', value: '96' }],
+      generationPreviewText: 'This is still preview-only text and not the final verified answer.',
+    };
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.generation-preview-copy')?.textContent).toContain('preview-only text');
+    expect(compiled.querySelector('.preview-text-pill')?.textContent).toContain('Draft text');
+    expect(compiled.querySelector('.answer-card')).toBeNull();
+  });
 });

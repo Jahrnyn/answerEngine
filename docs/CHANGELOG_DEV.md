@@ -72,3 +72,6 @@
 - Implemented Slice AS-4 with richer bounded stage summaries for `scope_inference`, `retrieval_execution`, `context_assembly`, and `answer_verification` in backend run events.
 - Refined the frontend running-preview shell so the latest active stage can surface more useful scope, retrieval, context, and verification details without changing final-answer semantics.
 - Re-checked the frontend build, backend compile/import sanity, and controlled SSE stage summaries locally; no generation preview text streaming was added in this slice.
+- Implemented Slice AS-5 with bounded `answer_generation` preview-text emission through the existing run-event and SSE transport path.
+- Added frontend rendering for non-final generation preview text during `running_preview`, keeping it visually distinct from the final verified answer and clearing it when the run moves past generation or completes.
+- Re-checked the frontend build, backend compile/import sanity, controlled sync execution, and controlled SSE transport locally; generation now emits multiple progressive preview events without changing final verified-answer semantics.

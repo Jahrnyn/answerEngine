@@ -39,6 +39,7 @@ type PreviewState = {
   currentStageLabel: string;
   latestMessage: string;
   latestSummaryRows: KeyValueRow[];
+  generationPreviewText: string;
 };
 
 @Component({
@@ -94,6 +95,10 @@ export class AppComponent {
 
   get previewRunId(): string | null {
     return this.previewState.runId;
+  }
+
+  get generationPreviewText(): string {
+    return this.previewState.generationPreviewText;
   }
 
   get answerText(): string {
@@ -422,6 +427,7 @@ export class AppComponent {
       currentStageLabel: 'Starting run',
       latestMessage: 'Opening the bounded run stream and waiting for the first stage event.',
       latestSummaryRows: [],
+      generationPreviewText: '',
     };
 
     try {
@@ -462,12 +468,21 @@ export class AppComponent {
   }
 
   private applyRunEvent(event: RunEvent): void {
+    const nextStageId = event.stage_id ?? this.previewState.currentStageId;
+    const nextPreviewText =
+      event.event_type === 'stage_preview' && event.stage_id === 'answer_generation'
+        ? String(event.preview_text ?? this.previewState.generationPreviewText)
+        : nextStageId === 'answer_generation'
+          ? this.previewState.generationPreviewText
+          : '';
+
     this.previewState = {
       runId: event.run_id,
-      currentStageId: event.stage_id ?? this.previewState.currentStageId,
+      currentStageId: nextStageId,
       currentStageLabel: this.stageLabelForEvent(event),
       latestMessage: this.messageForEvent(event),
       latestSummaryRows: this.summaryRowsForEvent(event),
+      generationPreviewText: nextPreviewText,
     };
   }
 
@@ -628,6 +643,7 @@ export class AppComponent {
       currentStageLabel: '',
       latestMessage: '',
       latestSummaryRows: [],
+      generationPreviewText: '',
     };
   }
 

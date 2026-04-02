@@ -308,6 +308,40 @@ textarea::placeholder {
   font-weight: 700;
 }
 
+.preview-text-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(219, 179, 83, 0.16);
+  color: #e3c87e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.generation-preview {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px dashed rgba(219, 179, 83, 0.34);
+  background: rgba(39, 31, 16, 0.34);
+}
+
+.generation-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.generation-preview-copy {
+  margin: 0;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
 .decision-pill.subtle {
   background: rgba(127, 143, 164, 0.12);
   color: var(--color-text-secondary);
@@ -616,6 +650,7 @@ li + li {
 
   .panel-header,
   .preview-header,
+  .generation-preview-header,
   .result-overview,
   .limitations-header,
   .inspect-header,

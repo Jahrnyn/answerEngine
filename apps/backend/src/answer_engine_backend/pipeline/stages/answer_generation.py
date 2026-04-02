@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Callable
+
 from answer_engine_backend.model_runtime import OllamaRuntime
 from answer_engine_backend.pipeline.models import (
     AnswerPolicy,
@@ -20,9 +22,14 @@ class AnswerGenerationStage:
         answer_policy: AnswerPolicy,
         stage_model_config: StageModelConfig,
         generation_note: str | None = None,
+        preview_sink: Callable[[str], None] | None = None,
     ) -> AnswerResult:
         prompt = self._build_prompt(query, context_pack, answer_policy, generation_note)
-        generation = self.runtime.generate(stage_model_config, prompt)
+        generation = self.runtime.generate(
+            stage_model_config,
+            prompt,
+            preview_sink=preview_sink,
+        )
 
         model_metadata = dict(generation.model_metadata)
         model_metadata.update(

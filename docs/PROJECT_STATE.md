@@ -66,8 +66,9 @@ Status: PARTIALLY IMPLEMENTED
 - Richer trace-oriented rendering exists for scope, retrieval, verification, context preview, stage routing, timings, token visibility, and errors
 - Frontend live run preview shell now exists with SSE consumption, bounded stage activity updates, and explicit running-preview versus final-result state separation
 - Live run preview now surfaces richer stage summaries for scope inference, retrieval execution, context assembly, and answer verification while the run is active
+- Generation preview text streaming now exists as non-final `answer_generation` preview output on the main surface during active runs
 - No advanced trace/debug explorer exists yet
-- No generation preview text streaming exists yet
+- No token-by-token preview guarantee exists
 
 ---
 
@@ -146,6 +147,7 @@ Current code state:
 - bounded run events may now also be transported over SSE through a dedicated streaming run route
 - the Angular frontend now consumes the SSE run route for live stage/activity preview while keeping final answer rendering post-verification
 - live stage summaries are now enriched for scope inference, retrieval execution, context assembly, and answer verification so the preview surface can show more useful bounded execution state
+- `answer_generation` may now emit multiple bounded preview-text events during generation, which remain preview-only and non-authoritative until terminal completion
 - final response mapping remains structurally simple
 
 ---
@@ -282,8 +284,7 @@ The following DO exist in minimal structural form:
 - optional inspect drawer with richer run-detail rendering
 - bounded in-memory run event emission for dev/debug inspection
 - SSE transport for bounded live run events
-- no generation preview text or token-by-token preview implementation yet
-- no generation preview text streaming implementation yet
+- no token-by-token preview guarantee or final-answer streaming implementation
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -311,6 +312,7 @@ The following have been verified against the current live local CfHEE setup:
 - backend now exposes a dedicated SSE route for bounded live run event transport while preserving `/runs/execute`
 - the frontend now consumes `POST /runs/stream` and shows a non-final running-preview shell with current stage and bounded activity details until the terminal event arrives
 - the running-preview shell now shows richer bounded stage summaries for scope, retrieval, context, and verification progress
+- the running-preview shell now also shows bounded generation preview text while `answer_generation` is active, and that text is replaced by the final verified result only after terminal completion
 - final verified answer rendering remains unchanged and still appears only after terminal completion
 
 Any assumption that these exist is incorrect.
