@@ -17,11 +17,20 @@ class CfheeClientError(Exception):
     endpoint: str
     body: str | None = None
 
+    @property
+    def category(self) -> str:
+        if self.status_code == 504:
+            return "upstream_timeout"
+        if self.status_code == 503:
+            return "upstream_unavailable"
+        return "upstream_failure"
+
     def to_detail(self) -> dict[str, str | int]:
         detail: dict[str, str | int] = {
             "message": self.message,
             "endpoint": self.endpoint,
             "status_code": self.status_code,
+            "category": self.category,
         }
         if self.body:
             detail["body"] = self.body

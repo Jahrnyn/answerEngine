@@ -55,5 +55,18 @@ class FinalResponseMappingStage:
         verification_result: VerificationResult,
     ) -> str:
         if verification_result.decision == "cannot_answer":
+            joined_limitations = " ".join(verification_result.limitations).lower()
+            if "timed out" in joined_limitations or "upstream_timeout" in joined_limitations:
+                return "I can't answer this reliably because upstream retrieval timed out before the run completed."
+            if "unavailable" in joined_limitations or "upstream_unavailable" in joined_limitations:
+                return "I can't answer this reliably because the upstream retrieval service is currently unavailable."
+            if "no reliable scope" in joined_limitations or "no_reliable_scope" in joined_limitations:
+                return "I can't answer this reliably because no validated scope could be confirmed for the query."
+            if "no evidence" in joined_limitations:
+                return "I can't answer this reliably because no evidence was retrieved for the query."
+            if "generation failed" in joined_limitations or "generation_failure" in joined_limitations:
+                return "I can't answer this reliably because answer generation failed during the run."
+            if "verification failed" in joined_limitations or "verification_failure" in joined_limitations:
+                return "I can't answer this reliably because answer verification failed during the run."
             return "I can't answer this reliably from the available evidence."
         return answer_result.answer_text

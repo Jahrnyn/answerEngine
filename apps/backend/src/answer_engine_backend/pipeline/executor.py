@@ -1,4 +1,13 @@
-from answer_engine_backend.pipeline.models import AnswerRun, StageTimer, new_run_id, utc_now
+from answer_engine_backend.model_runtime import ModelRuntimeError
+from answer_engine_backend.pipeline.models import (
+    AnswerResult,
+    AnswerRun,
+    RunError,
+    StageTimer,
+    VerificationResult,
+    new_run_id,
+    utc_now,
+)
 from answer_engine_backend.pipeline.stage_model_resolver import StageModelResolver
 from answer_engine_backend.pipeline.stages import (
     AnswerGenerationStage,
@@ -14,6 +23,8 @@ from answer_engine_backend.pipeline.stages import (
 
 
 class RunExecutor:
+    UPSTREAM_FAILURE_STATUSES = {"upstream_timeout", "upstream_unavailable", "upstream_failure"}
+
     def __init__(self) -> None:
         self.stage_model_resolver = StageModelResolver()
         self.query_analysis_stage = QueryAnalysisStage()
@@ -31,6 +42,7 @@ class RunExecutor:
     def execute(self, query: str) -> AnswerRun:
         timer = StageTimer()
         run_id = new_run_id()
+        errors: list[RunError] = []
         stage_model_routing = self.stage_model_resolver.resolve_many(
             [
                 "query_analysis",
@@ -67,6 +79,7 @@ class RunExecutor:
         timer.start_stage()
         scope_inference = self.scope_inference_stage.execute(query_analysis)
         timer.end_stage("scope_inference")
+        self._record_non_success_scope_inference(errors, scope_inference)
 
         timer.start_stage()
         retrieval_plan = self.retrieval_planning_stage.execute(
@@ -82,6 +95,7 @@ class RunExecutor:
             query_analysis.normalized_query,
         )
         timer.end_stage("retrieval_execution")
+        self._record_non_success_retrieval(errors, retrieval_result)
 
         timer.start_stage()
         context_pack = self.context_assembly_stage.execute(
@@ -91,26 +105,66 @@ class RunExecutor:
         timer.end_stage("context_assembly")
 
         timer.start_stage()
-        answer_result = self.answer_generation_stage.execute(
-            query_analysis.normalized_query,
-            context_pack,
-            answer_policy,
-            answer_generation_model,
-        )
+        if self._should_skip_generation(scope_inference, retrieval_result):
+            answer_result = self._build_failure_answer_result(
+                category=self._derive_failure_category(scope_inference, retrieval_result),
+                message=self._derive_failure_message(scope_inference, retrieval_result),
+            )
+        else:
+            try:
+                answer_result = self.answer_generation_stage.execute(
+                    query_analysis.normalized_query,
+                    context_pack,
+                    answer_policy,
+                    answer_generation_model,
+                )
+            except ModelRuntimeError as error:
+                errors.append(
+                    RunError(
+                        stage="answer_generation",
+                        category="generation_failure",
+                        message=error.message,
+                        endpoint=error.endpoint,
+                    )
+                )
+                answer_result = self._build_failure_answer_result(
+                    category="generation_failure",
+                    message=error.message,
+                )
         timer.end_stage("answer_generation")
 
         timer.start_stage()
-        verification_outcome = self.answer_verification_stage.execute(
-            query_analysis.normalized_query,
-            answer_result,
-            context_pack,
-            scope_inference,
-            answer_policy,
-            answer_verification_model,
-            answer_generation_model,
-        )
-        answer_result = verification_outcome.answer_result
-        verification_result = verification_outcome.verification_result
+        if self._should_skip_verification(scope_inference, retrieval_result, errors):
+            verification_result = self._build_failure_verification_result(
+                category=self._derive_failure_category(scope_inference, retrieval_result, errors),
+                message=self._derive_failure_message(scope_inference, retrieval_result, errors),
+            )
+        else:
+            try:
+                verification_outcome = self.answer_verification_stage.execute(
+                    query_analysis.normalized_query,
+                    answer_result,
+                    context_pack,
+                    scope_inference,
+                    answer_policy,
+                    answer_verification_model,
+                    answer_generation_model,
+                )
+                answer_result = verification_outcome.answer_result
+                verification_result = verification_outcome.verification_result
+            except ModelRuntimeError as error:
+                errors.append(
+                    RunError(
+                        stage="answer_verification",
+                        category="verification_failure",
+                        message=error.message,
+                        endpoint=error.endpoint,
+                    )
+                )
+                verification_result = self._build_failure_verification_result(
+                    category="verification_failure",
+                    message=error.message,
+                )
         timer.end_stage("answer_verification")
 
         timer.start_stage()
@@ -138,5 +192,121 @@ class RunExecutor:
             verification_result=verification_result,
             final_response=final_response,
             timings=timer.build(),
-            errors=[],
+            errors=errors,
         )
+
+    def _build_failure_answer_result(
+        self,
+        *,
+        category: str,
+        message: str,
+    ) -> AnswerResult:
+        return AnswerResult(
+            answer_text="",
+            token_usage={},
+            model_metadata={
+                "failure_category": category,
+                "failure_message": message,
+            },
+        )
+
+    def _build_failure_verification_result(
+        self,
+        *,
+        category: str,
+        message: str,
+    ) -> VerificationResult:
+        return VerificationResult(
+            grounded=False,
+            scope_consistency_ok=False,
+            coverage_ok=False,
+            adequacy_ok=False,
+            uncertainty_flags=[category],
+            limitations=[message],
+            decision="cannot_answer",
+            requires_regeneration=False,
+            regeneration_attempted=False,
+            confidence_score=0.1,
+        )
+
+    def _record_non_success_scope_inference(self, errors, scope_inference) -> None:
+        if scope_inference.status in {"ok", "fallback"}:
+            return
+        errors.append(
+            RunError(
+                stage="scope_inference",
+                category=scope_inference.failure_reason or scope_inference.status,
+                message=f"Scope inference ended with status '{scope_inference.status}'.",
+            )
+        )
+
+    def _record_non_success_retrieval(self, errors, retrieval_result) -> None:
+        if retrieval_result.status == "ok":
+            return
+        category = retrieval_result.failure_reason or retrieval_result.status
+        errors.append(
+            RunError(
+                stage="retrieval_execution",
+                category=category,
+                message=self._message_for_category(
+                    category,
+                    default=f"Retrieval ended with status '{retrieval_result.status}'.",
+                ),
+            )
+        )
+
+    def _should_skip_generation(self, scope_inference, retrieval_result) -> bool:
+        return (
+            scope_inference.status in self.UPSTREAM_FAILURE_STATUSES
+            or retrieval_result.status in self.UPSTREAM_FAILURE_STATUSES
+        )
+
+    def _should_skip_verification(self, scope_inference, retrieval_result, errors) -> bool:
+        return self._should_skip_generation(scope_inference, retrieval_result) or any(
+            error.category == "generation_failure" for error in errors
+        )
+
+    def _derive_failure_category(self, scope_inference, retrieval_result, errors=None) -> str:
+        if errors:
+            for error in reversed(errors):
+                if error.category in {
+                    "generation_failure",
+                    "verification_failure",
+                    "upstream_timeout",
+                    "upstream_unavailable",
+                    "upstream_failure",
+                }:
+                    return error.category
+        if retrieval_result.status in self.UPSTREAM_FAILURE_STATUSES:
+            return retrieval_result.failure_reason or retrieval_result.status
+        if scope_inference.status in self.UPSTREAM_FAILURE_STATUSES:
+            return scope_inference.failure_reason or scope_inference.status
+        if scope_inference.status == "no_reliable_scope":
+            return "no_reliable_scope"
+        if retrieval_result.status == "no_evidence":
+            return "no_evidence"
+        return "cannot_answer"
+
+    def _derive_failure_message(self, scope_inference, retrieval_result, errors=None) -> str:
+        category = self._derive_failure_category(scope_inference, retrieval_result, errors)
+        default_message = self._message_for_category(category)
+        if category in self.UPSTREAM_FAILURE_STATUSES | {"no_reliable_scope", "no_evidence", "cannot_answer"}:
+            return default_message
+        if errors:
+            for error in reversed(errors):
+                if error.category == category:
+                    return error.message
+        return default_message
+
+    def _message_for_category(self, category: str, default: str | None = None) -> str:
+        messages = {
+            "upstream_timeout": "Upstream retrieval timed out before the answer could be completed.",
+            "upstream_unavailable": "Upstream retrieval is currently unavailable.",
+            "upstream_failure": "Upstream retrieval failed before the answer could be completed.",
+            "no_reliable_scope": "No reliable scope could be validated for this query.",
+            "no_evidence": "No evidence was retrieved for this query.",
+            "generation_failure": "Answer generation failed.",
+            "verification_failure": "Answer verification failed.",
+            "cannot_answer": "The system cannot answer this reliably from the available evidence.",
+        }
+        return messages.get(category, default or "The system cannot answer this reliably.")

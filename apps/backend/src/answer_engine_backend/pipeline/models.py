@@ -87,6 +87,7 @@ class RetrievalRoundResult(BaseModel):
     status: str = "ok"
     result_count: int = 0
     chunks: list[RetrievedChunk]
+    failure_reason: str | None = None
 
 
 class RetrievalResult(BaseModel):
@@ -128,6 +129,13 @@ class VerificationResult(BaseModel):
     confidence_score: float
 
 
+class RunError(BaseModel):
+    stage: str
+    category: str
+    message: str
+    endpoint: str | None = None
+
+
 class FinalResponse(BaseModel):
     answer_text: str
     sources: list[SourceReference]
@@ -158,7 +166,7 @@ class AnswerRun(BaseModel):
     verification_result: VerificationResult
     final_response: FinalResponse
     timings: TimingInfo
-    errors: list[str] = Field(default_factory=list)
+    errors: list[RunError] = Field(default_factory=list)
 
 
 class StageTimer:

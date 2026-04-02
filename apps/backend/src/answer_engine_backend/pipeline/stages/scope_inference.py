@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from answer_engine_backend.cfhee_client import CfheeClient
+from answer_engine_backend.cfhee_client import CfheeClient, CfheeClientError
 from answer_engine_backend.pipeline.models import (
     QueryAnalysisResult,
     ScopeInferenceResult,
@@ -30,13 +30,26 @@ class ScopeInferenceStage:
         self.cfhee_client = cfhee_client or CfheeClient(get_settings())
 
     def execute(self, query_analysis: QueryAnalysisResult) -> ScopeInferenceResult:
-        available_scopes = self._load_available_scopes()
-        heuristic_candidates = self._filter_candidates(query_analysis, available_scopes)
-        ranked_candidates = heuristic_candidates[: self.MAX_RANKED_CANDIDATES]
-        validation_scores = self._validate_candidates(
-            query_analysis.normalized_query,
-            ranked_candidates[: self.MAX_VALIDATED_SCOPES],
-        )
+        try:
+            available_scopes = self._load_available_scopes()
+            heuristic_candidates = self._filter_candidates(query_analysis, available_scopes)
+            ranked_candidates = heuristic_candidates[: self.MAX_RANKED_CANDIDATES]
+            validation_scores = self._validate_candidates(
+                query_analysis.normalized_query,
+                ranked_candidates[: self.MAX_VALIDATED_SCOPES],
+            )
+        except CfheeClientError as error:
+            return ScopeInferenceResult(
+                status=error.category,
+                primary_scope=None,
+                secondary_scopes=[],
+                candidate_scopes=[],
+                rejected_scopes=[],
+                confidence_scores={},
+                validation_scores={},
+                fallback_applied=False,
+                failure_reason=error.category,
+            )
 
         accepted_candidates = [
             candidate

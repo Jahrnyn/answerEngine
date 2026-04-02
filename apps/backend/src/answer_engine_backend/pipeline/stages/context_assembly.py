@@ -17,7 +17,13 @@ class ContextAssemblyStage:
         retrieval_result: RetrievalResult,
         answer_policy: AnswerPolicy,
     ) -> ContextPack:
-        if retrieval_result.status in {"no_retrieval", "no_evidence"}:
+        if retrieval_result.status in {
+            "no_retrieval",
+            "no_evidence",
+            "upstream_timeout",
+            "upstream_unavailable",
+            "upstream_failure",
+        }:
             return self._build_empty_context(retrieval_result.failure_reason)
 
         selected_chunks = self._select_chunks(retrieval_result, answer_policy)

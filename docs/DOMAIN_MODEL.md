@@ -218,13 +218,13 @@ RetrievalRound:
 ### 4.9 RetrievalResult
 
 RetrievalResult:
-- status: "ok" | "no_evidence" | "no_retrieval"
+- status: "ok" | "no_evidence" | "no_retrieval" | "upstream_timeout" | "upstream_unavailable" | "upstream_failure"
 - results_by_round: list[RetrievalRoundResult]
 - aggregated_results: list[RetrievedChunk]
 - failure_reason: string (optional)
 
 Notes:
-- V1 may return explicit empty or skipped retrieval states instead of pretending successful evidence retrieval
+- V1 may return explicit empty, skipped, or upstream-failure retrieval states instead of pretending successful evidence retrieval
 
 ---
 
@@ -232,9 +232,10 @@ Notes:
 
 RetrievalRoundResult:
 - scope: ScopeReference
-- status: "ok" | "empty"
+- status: "ok" | "empty" | "upstream_timeout" | "upstream_unavailable" | "upstream_failure"
 - result_count: int
 - chunks: list[RetrievedChunk]
+- failure_reason: string (optional)
 
 ---
 
@@ -326,6 +327,20 @@ Notes:
 TimingInfo:
 - total_time_ms: int
 - stage_times: dict[string -> int]
+
+---
+
+### 4.18 RunError
+
+RunError:
+- stage: string
+- category: string
+- message: string
+- endpoint: string (optional)
+
+Notes:
+- used for practical stage-attributed failure surfacing in V1 runs
+- keeps upstream timeout and runtime failure causes visible without redesigning the whole trace model
 
 ---
 

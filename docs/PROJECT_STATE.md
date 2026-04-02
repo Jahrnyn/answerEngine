@@ -43,6 +43,7 @@ Status: PARTIALLY IMPLEMENTED
 - Practical bounded V1 context assembly exists with deterministic chunk selection and explicit minimal empty-context handling
 - Practical V1 answer generation exists with a simple grounded prompt path and local Ollama runtime integration
 - Practical V1 answer verification exists with combined bounded evaluation and at-most-one regeneration handling
+- Practical V1 failure hardening exists for scope inference, retrieval execution, and final cannot-answer behavior under upstream timeout/failure conditions
 - Explicit stub stage boundaries remain in the final response mapping layer only
 - Thin CfHEE client foundation exists
 - Central stage model resolver skeleton exists
@@ -97,6 +98,7 @@ Status: PARTIALLY IMPLEMENTED
 - Dev-oriented backend verification routes exist
 - Pipeline integration exists for scope inference, retrieval planning, and retrieval execution
 - Current local CfHEE verification has been re-checked against `http://127.0.0.1:4210`
+- Current CfHEE timeout default is `10.0` seconds for backend requests
 - No knowledge promotion behavior
 
 ---
@@ -128,6 +130,7 @@ Current code state:
 - CfHEE client can resolve the effective API base URL from the configured local CfHEE host when that host serves the workbench UI
 - Answer Generation uses a simple grounded prompt path with the local model runtime and explicit failure surfacing
 - Answer Verification uses combined bounded rule checks, model-assisted evaluation when available, and at-most-one explicit regeneration
+- retrieval and final run output now preserve explicit upstream timeout/unavailable/failure distinctions instead of collapsing them into no-evidence behavior
 - final response mapping remains structurally simple
 
 ---
@@ -258,6 +261,7 @@ The following DO exist in minimal structural form:
 - bounded context assembly with inspectable structured context output
 - practical V1 answer generation with central stage routing and local Ollama runtime integration
 - practical V1 answer verification with bounded combined evaluation and explicit regeneration trace visibility
+- practical V1 stage-attributed failure surfacing through `AnswerRun.errors`
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -271,6 +275,8 @@ The following have been verified against the current live local CfHEE setup:
 - centralized stage routing has been re-checked and currently resolves `answer_generation` to `qwen2.5:7b`
 - live end-to-end `/runs/execute` remained intermittently blocked in this round by upstream CfHEE retrieval timeouts before verification could complete
 - controlled local verification runs now produce real non-placeholder `verification_result` output, including explicit keep, regenerate, and cannot-answer style outcomes
+- live end-to-end `/runs/execute` has now been re-checked successfully again for at least one real query path (`bechtle crm`) after the CfHEE timeout hardening round
+- controlled timeout-path runs now return explicit `upstream_timeout` status and truthful cannot-answer output instead of surfacing as empty-evidence success
 
 Any assumption that these exist is incorrect.
 

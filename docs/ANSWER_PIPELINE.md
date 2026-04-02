@@ -296,7 +296,7 @@ RetrievalResult:
 #### Notes
 - Retrieval MUST be deterministic per round
 - No silent fallback allowed
-- the current backend slice returns explicit `no_retrieval` or `no_evidence` style results when retrieval does not proceed or returns no chunks
+- the current backend slice returns explicit `upstream_timeout`, `upstream_unavailable`, `upstream_failure`, `no_retrieval`, or `no_evidence` style results instead of collapsing upstream failures into empty-evidence semantics
 
 ---
 
@@ -483,6 +483,7 @@ Trace must be:
 - complete
 - structured
 - accessible to UI
+- stage-attributed errors should remain visible when upstream or runtime failures prevent normal completion
 
 ---
 
@@ -537,6 +538,7 @@ Examples:
 
 - no reliable scope after bounded fallback -> explicit no-reliable-scope response
 - empty retrieval -> return "no evidence"
+- upstream retrieval timeout -> explicit timeout classification and cannot-answer outcome
 - low confidence -> mark answer as uncertain
 - verification failure after one allowed regeneration -> return limited or cannot-answer response
 

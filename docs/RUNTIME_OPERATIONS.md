@@ -48,11 +48,16 @@ Default expected base URL:
 
 - `http://127.0.0.1:4210`
 
+Current backend timeout default for CfHEE requests:
+
+- `10.0` seconds
+
 Current local note:
 - the configured CfHEE base URL may be a workbench/UI host
 - the backend and local startup script may resolve the effective CfHEE API base URL from `runtime-config.js` when that host exposes the API separately
 
 If CfHEE is unavailable or does not expose the required capabilities, the Answer Engine development startup must fail.
+During normal backend runs, upstream timeout and availability failures should remain explicit in run output rather than being collapsed into empty-evidence behavior.
 
 ---
 

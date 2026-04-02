@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from answer_engine_backend.cfhee_client import CfheeClient
+from answer_engine_backend.cfhee_client import CfheeClient, CfheeClientError
 from answer_engine_backend.pipeline.models import (
     RetrievedChunk,
     RetrievalPlan,
@@ -11,6 +11,8 @@ from answer_engine_backend.settings import get_settings
 
 
 class RetrievalExecutionStage:
+    UPSTREAM_FAILURE_STATUSES = {"upstream_timeout", "upstream_unavailable", "upstream_failure"}
+
     def __init__(self, cfhee_client: CfheeClient | None = None) -> None:
         self.cfhee_client = cfhee_client or CfheeClient(get_settings())
 
@@ -18,7 +20,7 @@ class RetrievalExecutionStage:
         if not retrieval_plan.rounds:
             scope_status = retrieval_plan.fallback_rules.get("scope_status")
             return RetrievalResult(
-                status="no_retrieval",
+                status=scope_status if scope_status in self.UPSTREAM_FAILURE_STATUSES else "no_retrieval",
                 results_by_round=[],
                 aggregated_results=[],
                 failure_reason=scope_status or "retrieval_not_required",
@@ -28,14 +30,31 @@ class RetrievalExecutionStage:
         aggregated_by_key: dict[str, RetrievedChunk] = {}
 
         for round_index, round_ in enumerate(retrieval_plan.rounds, start=1):
-            response = self.cfhee_client.query_retrieval(
-                {
-                    "query": query,
-                    "scope": round_.scope.model_dump(),
-                    "top_k": round_.top_k,
-                    "include_chunks": True,
-                }
-            )
+            try:
+                response = self.cfhee_client.query_retrieval(
+                    {
+                        "query": query,
+                        "scope": round_.scope.model_dump(),
+                        "top_k": round_.top_k,
+                        "include_chunks": True,
+                    }
+                )
+            except CfheeClientError as error:
+                round_results.append(
+                    RetrievalRoundResult(
+                        scope=round_.scope,
+                        status=error.category,
+                        result_count=0,
+                        chunks=[],
+                        failure_reason=error.category,
+                    )
+                )
+                return RetrievalResult(
+                    status=error.category,
+                    results_by_round=round_results,
+                    aggregated_results=[],
+                    failure_reason=error.category,
+                )
             chunks = self._map_chunks(
                 response.get("results", []),
                 round_index=round_index,
@@ -47,6 +66,7 @@ class RetrievalExecutionStage:
                     status="ok" if chunks else "empty",
                     result_count=len(chunks),
                     chunks=chunks,
+                    failure_reason=None if chunks else "no_evidence",
                 )
             )
             for chunk in chunks:
