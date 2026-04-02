@@ -56,3 +56,6 @@
 - Re-checked the frontend build and verified the refined main-result path again through the frontend dev proxy with a live timeout-path run response.
 - Implemented Slice 12.5 with a compact right-edge inspect drawer handle, replacing the floating inspect CTA-style trigger and the extra top-level inspect action button.
 - Re-checked the frontend build after the drawer-trigger cleanup and kept the existing drawer open/close behavior intact.
+- Integrated `docs/ACTIVE_STREAM.md` into the documentation system and aligned architecture, pipeline, and project-state docs around future live run preview as a non-final execution-visibility layer.
+- Added a minimal conceptual backend run-event contract in `DOMAIN_MODEL` for future run activity transport, including `RunEvent` and `RunEventType`.
+- Updated current focus toward active stream / live run preview groundwork without claiming any SSE, event emission, or frontend live preview implementation.

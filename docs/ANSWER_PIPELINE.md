@@ -367,6 +367,7 @@ AnswerResult:
 - verification requires a complete candidate answer
 - V1 does NOT stream unverified final answer text directly to the user
 - V1 may expose pipeline progress or status updates instead of answer-text streaming
+- future live run preview may expose transient stage-scoped preview output, including generation preview text, but that preview remains non-final until verification completes
 - model choice is resolved via routing policy, not by the stage itself
 - the current backend slice uses a simple grounded prompt built from the normalized query, structured context, and answer policy
 - the current backend slice uses the central stage model resolver plus local Ollama runtime integration for candidate answer generation
@@ -435,6 +436,7 @@ confidence_score: float (0.0–1.0)
 - the current backend slice uses combined practical V1 verification with conservative rule checks plus local model-assisted evaluation when available
 - the current backend slice may fall back to explicit rule-based verification if model-assisted verification is unavailable or returns unusable output
 - the current backend slice allows at most one explicit regeneration pass and records whether regeneration happened in trace data
+- future live preview output from earlier stages may be superseded here; verification remains the stage that determines whether final answer text may be shown as authoritative
 
 ---
 
@@ -457,6 +459,7 @@ FinalResponse:
 #### Notes
 - the user-visible final answer is shown only after verification
 - V1 may expose non-answer run states such as scope inference, retrieval, generation, and verification progress
+- future active stream events may expose transient run activity or preview text before this stage completes, but those events do not change final-response semantics
 
 ---
 
@@ -484,6 +487,7 @@ Trace must be:
 - structured
 - accessible to UI
 - stage-attributed errors should remain visible when upstream or runtime failures prevent normal completion
+- compatible with future run-event emission for live preview without collapsing preview and final response into the same contract
 
 ---
 

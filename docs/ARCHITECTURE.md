@@ -127,6 +127,10 @@ The system exposes:
 - model inputs (optional)
 - verification outcomes
 
+Future live run preview may expose bounded run activity before completion, but this remains an execution-visibility layer rather than a change to final answer semantics.
+Preview output is transient and non-final.
+The final verified answer remains authoritative only after answer verification completes.
+
 ---
 
 ### 3.6 Memory Separation
@@ -244,6 +248,7 @@ Each stage produces structured outputs that can be inspected.
 #### Trace Service
 - records full execution trace
 - exposes pipeline visibility
+- may later support emitting bounded run events for live preview transport
 
 ---
 
@@ -278,6 +283,7 @@ OPTIONAL INSPECT / SIDE PANEL:
 - the main question/answer surface is primary in V1
 - the final answer text is shown only after verification
 - pipeline progress or status updates may be shown during execution
+- future live preview output may be shown during execution, but it must remain visually distinct from the final verified answer
 - trace is always accessible when inspection is needed
 - answers are inspectable
 - developer mode exposes deeper details

@@ -63,6 +63,7 @@ Status: PARTIALLY IMPLEMENTED
 - Inspect drawer now uses a compact right-edge handle instead of a floating CTA-style trigger
 - Richer trace-oriented rendering exists for scope, retrieval, verification, context preview, stage routing, timings, token visibility, and errors
 - No advanced trace/debug explorer exists yet
+- Active stream / live run preview is now documented as the next contract-focused frontend/backend groundwork area
 
 ---
 
@@ -149,6 +150,7 @@ Includes:
 - AnswerRun
 - AnswerPolicy
 - StageModelConfig (conceptual)
+- RunEvent / RunEventType (conceptual)
 - VerificationResult
 - ChatSession (optional)
 - ChatMessage (optional)
@@ -158,6 +160,7 @@ Includes:
 Current code state:
 - `AnswerRun`-like execution payload assembled by the backend skeleton
 - stage model routing metadata may be attached to run output for inspectability
+- run-event contract now defined in documentation only for future live preview work
 - no persistence
 
 ---
@@ -267,6 +270,7 @@ The following DO exist in minimal structural form:
 - practical V1 stage-attributed failure surfacing through `AnswerRun.errors`
 - Angular app shell with a dark main question/answer surface and thin `/runs/execute` integration
 - optional inspect drawer with richer run-detail rendering
+- no live run preview transport, event emission, or preview-text streaming implementation yet
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -289,6 +293,7 @@ The following have been verified against the current live local CfHEE setup:
 - the refined inspect side-panel has been re-checked against a live timeout-path run payload and now surfaces run time, scope status, retrieval status, verification decision, token visibility, timings, routing, and errors more prominently
 - the refined main result surface has been re-checked against a live timeout-path run payload and now surfaces cannot-answer state, certainty, verification decision, trace id, run time, primary scope, and limitations more clearly without requiring the inspect drawer
 - the inspect drawer trigger has been cleaned up to a compact right-edge handle and the floating inspect CTA is no longer part of the current frontend shell
+- the active stream design document is now integrated into the documentation system and the minimal run-event contract is defined conceptually only
 
 Any assumption that these exist is incorrect.
 

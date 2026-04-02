@@ -312,3 +312,9 @@ Reason: this keeps V1 practical for bounded local execution without collapsing a
 ## ADR-051
 Model routing is resolved centrally rather than inside individual pipeline stages.
 Reason: centralized routing keeps model selection explicit, consistent, and separate from stage responsibilities.
+
+---
+
+## ADR-052
+Future active stream or live run preview output is non-final and must remain distinct from the final verified answer.
+Reason: the high-trust answer model depends on post-verification final-answer semantics, so preview visibility must not blur transient stage output with authoritative final output.

@@ -179,7 +179,9 @@ Includes:
 - optional inspect panel
 - styling constraints
 
-### ACTIVE_STREAM.md
+---
+
+### `docs/ACTIVE_STREAM.md`
 
 Defines the live run preview / active stream model for the Answer Engine.
 
@@ -220,6 +222,7 @@ For most implementation tasks:
 11. `docs/OPERATIONS_SURFACE.md`
 12. `docs/PROMPTING_GUIDE.md`
 13. `docs/CHANGELOG_DEV.md`
+14. `docs/ACTIVE_STREAM.md` when working on live run preview, run events, or real-time transport
 
 ---
 

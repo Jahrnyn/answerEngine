@@ -344,6 +344,44 @@ Notes:
 
 ---
 
+### 4.19 RunEvent
+
+Minimal conceptual event model for future live run preview.
+
+RunEvent:
+- run_id: string
+- event_type: RunEventType
+- stage_id: string (optional)
+- timestamp: datetime
+- message: string (optional)
+- preview_text: string (optional)
+- summary: dict (optional)
+
+Notes:
+- intended for backend-to-frontend run activity visibility
+- preview-oriented and non-final by design
+- should carry only bounded, stage-relevant data
+- does not replace `AnswerRun` or `FinalResponse`
+
+---
+
+### 4.20 RunEventType
+
+RunEventType:
+- run_started
+- stage_started
+- stage_progress
+- stage_preview
+- stage_completed
+- run_completed
+- run_failed
+
+Notes:
+- `stage_preview` is the event type intended for transient preview text or lightweight preview summaries
+- `run_completed` and `run_failed` should remain distinct from the final request/response payload shape
+
+---
+
 ## 5. API Response Model
 
 ---
