@@ -60,6 +60,7 @@ Status: PARTIALLY IMPLEMENTED
 - Refined main result surface exists with clearer keep / limit / cannot-answer / uncertainty-oriented rendering
 - Main result summary visibility now includes certainty, verification decision, primary scope, run time, trace id, and top limitations when present
 - Optional inspect side-panel exists as a real secondary drawer-style surface
+- Inspect drawer now uses a compact right-edge handle instead of a floating CTA-style trigger
 - Richer trace-oriented rendering exists for scope, retrieval, verification, context preview, stage routing, timings, token visibility, and errors
 - No advanced trace/debug explorer exists yet
 
@@ -287,6 +288,7 @@ The following have been verified against the current live local CfHEE setup:
 - the frontend inspect panel shell has been re-checked against a live timeout-path run payload and now renders practical trace-adjacent data sections from the backend run output
 - the refined inspect side-panel has been re-checked against a live timeout-path run payload and now surfaces run time, scope status, retrieval status, verification decision, token visibility, timings, routing, and errors more prominently
 - the refined main result surface has been re-checked against a live timeout-path run payload and now surfaces cannot-answer state, certainty, verification decision, trace id, run time, primary scope, and limitations more clearly without requiring the inspect drawer
+- the inspect drawer trigger has been cleaned up to a compact right-edge handle and the floating inspect CTA is no longer part of the current frontend shell
 
 Any assumption that these exist is incorrect.
 

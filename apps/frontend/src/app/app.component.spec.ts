@@ -145,4 +145,15 @@ describe('AppComponent', () => {
     expect(compiled.textContent).toContain('Trace id');
     expect(compiled.textContent).toContain('This is a bounded local run.');
   });
+
+  it('should render the inspect drawer handle instead of the floating inspect CTA', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    app.runResult = mockRunResponse;
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.inspect-handle')?.textContent).toContain('<<');
+    expect(compiled.querySelector('.inspect-fab')).toBeNull();
+  });
 });

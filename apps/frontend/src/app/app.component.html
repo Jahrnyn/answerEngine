@@ -23,14 +23,6 @@
         <button type="submit" class="primary-button" [disabled]="isSubmitDisabled">
           {{ isSubmitting ? 'Running...' : 'Run Answer Engine' }}
         </button>
-        <button
-          type="button"
-          class="secondary-button"
-          [disabled]="!runResult && !isSubmitting"
-          (click)="toggleInspectPanel()"
-        >
-          {{ inspectOpen ? 'Hide Inspect' : 'Open Inspect' }}
-        </button>
         <p class="status-text" *ngIf="isSubmitting">{{ runningStatus }}</p>
       </div>
     </form>
@@ -142,12 +134,13 @@
 
   <button
     type="button"
-    class="inspect-fab"
+    class="inspect-handle"
     [class.open]="inspectOpen"
     [disabled]="!runResult && !isSubmitting"
+    [attr.aria-label]="inspectOpen ? 'Close inspect drawer' : 'Open inspect drawer'"
     (click)="toggleInspectPanel()"
   >
-    {{ inspectOpen ? 'Close Inspect' : 'Inspect Run' }}
+    {{ inspectOpen ? '>>' : '<<' }}
   </button>
 
   <div class="inspect-backdrop" *ngIf="inspectOpen" (click)="closeInspectPanel()"></div>

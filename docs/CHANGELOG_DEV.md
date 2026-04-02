@@ -54,3 +54,5 @@
 - Implemented Slice 13 with a more intentional main result surface for success, limited, cannot-answer, and uncertainty-heavy outcomes.
 - Refined the primary answer card to keep answer text visually dominant while surfacing certainty, verification decision, primary scope, total run time, trace id, and top limitations more clearly.
 - Re-checked the frontend build and verified the refined main-result path again through the frontend dev proxy with a live timeout-path run response.
+- Implemented Slice 12.5 with a compact right-edge inspect drawer handle, replacing the floating inspect CTA-style trigger and the extra top-level inspect action button.
+- Re-checked the frontend build after the drawer-trigger cleanup and kept the existing drawer open/close behavior intact.

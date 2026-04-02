@@ -2,6 +2,7 @@
   display: block;
   min-height: 100vh;
   color: var(--color-text-primary);
+  --inspect-drawer-width: min(480px, calc(100vw - 24px));
 }
 
 .app-shell {
@@ -122,7 +123,7 @@ textarea::placeholder {
 .primary-button,
 .secondary-button,
 .drawer-close,
-.inspect-fab {
+.inspect-handle {
   appearance: none;
   border-radius: 999px;
   padding: 12px 18px;
@@ -139,7 +140,7 @@ textarea::placeholder {
 }
 
 .primary-button:hover:not(:disabled),
-.inspect-fab:hover:not(:disabled) {
+.inspect-handle:hover:not(:disabled) {
   background: var(--color-accent-hover);
   transform: translateY(-1px);
 }
@@ -159,7 +160,7 @@ textarea::placeholder {
 
 .primary-button:disabled,
 .secondary-button:disabled,
-.inspect-fab:disabled {
+.inspect-handle:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -414,19 +415,34 @@ li + li {
   line-height: 1.5;
 }
 
-.inspect-fab {
+.inspect-handle {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 25;
-  border: 0;
-  background: var(--color-accent);
-  color: var(--color-text-primary);
-  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.3);
+  top: 50%;
+  right: 0;
+  z-index: 36;
+  min-width: 44px;
+  padding: 14px 10px;
+  border: 1px solid var(--color-border-subtle);
+  border-right: 0;
+  border-radius: 14px 0 0 14px;
+  background: rgba(20, 28, 39, 0.96);
+  color: var(--color-text-secondary);
+  box-shadow: -10px 14px 28px rgba(0, 0, 0, 0.22);
+  transform: translateY(-50%);
 }
 
-.inspect-fab.open {
-  background: #234879;
+.inspect-handle:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  border-color: var(--color-accent);
+  transform: translate(-2px, -50%);
+}
+
+.inspect-handle.open {
+  right: var(--inspect-drawer-width);
+  background: rgba(15, 22, 32, 0.98);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+  transform: translate(100%, -50%);
 }
 
 .inspect-backdrop {
@@ -441,7 +457,7 @@ li + li {
   position: fixed;
   top: 0;
   right: 0;
-  width: min(480px, calc(100vw - 24px));
+  width: var(--inspect-drawer-width);
   height: 100vh;
   padding: 20px 20px 24px;
   background: #0f1620;
@@ -538,6 +554,10 @@ li + li {
 
   .inspect-drawer {
     width: 100vw;
+  }
+
+  .inspect-handle.open {
+    right: 100vw;
   }
 
   .panel-header,

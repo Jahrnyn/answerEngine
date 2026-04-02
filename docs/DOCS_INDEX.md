@@ -179,6 +179,19 @@ Includes:
 - optional inspect panel
 - styling constraints
 
+### ACTIVE_STREAM.md
+
+Defines the live run preview / active stream model for the Answer Engine.
+
+Use this when working on:
+- backend-to-frontend run event streaming
+- live pipeline activity visibility
+- preview output vs final verified answer semantics
+- generation preview text streaming
+- SSE or equivalent real-time transport design
+
+This document defines how transient preview output is exposed during execution without breaking the verified-final-answer contract.
+
 ---
 
 ## Meta docs
