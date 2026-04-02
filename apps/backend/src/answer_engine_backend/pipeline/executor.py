@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from answer_engine_backend.model_runtime import ModelRuntimeError
 from answer_engine_backend.pipeline.models import (
     AnswerResult,
@@ -40,7 +42,12 @@ class RunExecutor:
         )
         self.final_response_mapping_stage = FinalResponseMappingStage()
 
-    def execute(self, query: str) -> AnswerRun:
+    def execute(
+        self,
+        query: str,
+        *,
+        event_sink: Callable[[RunEvent], None] | None = None,
+    ) -> AnswerRun:
         timer = StageTimer()
         run_id = new_run_id()
         errors: list[RunError] = []
@@ -53,19 +60,20 @@ class RunExecutor:
             stage_id: str | None = None,
             message: str | None = None,
             preview_text: str | None = None,
-            summary: dict[str, str | int | float | bool] | None = None,
+            summary: dict[str, str | int | float | bool | None] | None = None,
         ) -> None:
-            events.append(
-                RunEvent(
-                    run_id=run_id,
-                    event_type=event_type,
-                    stage_id=stage_id,
-                    timestamp=utc_now(),
-                    message=message,
-                    preview_text=preview_text,
-                    summary=summary or {},
-                )
+            event = RunEvent(
+                run_id=run_id,
+                event_type=event_type,
+                stage_id=stage_id,
+                timestamp=utc_now(),
+                message=message,
+                preview_text=preview_text,
+                summary=summary or {},
             )
+            events.append(event)
+            if event_sink is not None:
+                event_sink(event)
 
         emit_event(
             "run_started",
@@ -352,6 +360,9 @@ class RunExecutor:
                 "decision": verification_result.decision,
                 "error_count": len(errors),
                 "certainty": final_response.certainty,
+                "trace_id": final_response.trace_id,
+                "final_answer_text": final_response.answer_text,
+                "source_count": len(final_response.sources),
             },
         )
 

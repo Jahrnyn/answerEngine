@@ -128,6 +128,12 @@ Current frontend dev behavior:
 - the inspect side-panel can be opened or closed explicitly
 - the inspect panel can render run summary, scope, retrieval, verification, context preview, routing, timings, token visibility, and error details when a run payload is present
 
+Current backend active-stream note:
+
+- `POST /runs/stream` may now emit bounded run events over SSE
+- this is a backend transport surface only at present
+- it does not imply frontend live preview rendering or unverified final-answer streaming
+
 ---
 
 ## 9. Developer verification routes

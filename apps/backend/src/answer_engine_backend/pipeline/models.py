@@ -143,7 +143,7 @@ class RunEvent(BaseModel):
     timestamp: datetime
     message: str | None = None
     preview_text: str | None = None
-    summary: dict[str, str | int | float | bool] = Field(default_factory=dict)
+    summary: dict[str, str | int | float | bool | None] = Field(default_factory=dict)
 
 
 class FinalResponse(BaseModel):

@@ -62,3 +62,6 @@
 - Implemented Slice 14 with bounded in-memory backend run event emission, collecting run and stage lifecycle events during execution and attaching them to the final dev run output.
 - Added one bounded generation preview snapshot event to the answer-generation path without introducing SSE, transport, or user-visible streaming behavior.
 - Re-checked backend execution locally so `/runs/execute` still returns normal final answer output while now also returning `events[]` for dev/debug inspection.
+- Implemented Slice 15 with a dedicated SSE transport route for bounded run events while preserving the existing synchronous `/runs/execute` behavior.
+- Added backend streaming of `run_started`, stage lifecycle events, bounded generation preview snapshots, and terminal `run_completed` or `run_failed` events over `POST /runs/stream`.
+- Re-checked the backend locally so `/health` and `/runs/execute` remain intact and the new SSE route emits ordered live event payloads with terminal completion or failure behavior.

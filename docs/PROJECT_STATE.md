@@ -45,6 +45,7 @@ Status: PARTIALLY IMPLEMENTED
 - Practical V1 answer verification exists with combined bounded evaluation and at-most-one regeneration handling
 - Practical V1 failure hardening exists for scope inference, retrieval execution, and final cannot-answer behavior under upstream timeout/failure conditions
 - Practical in-memory run-event emission now exists across the pipeline for dev/debug inspection
+- Practical SSE transport now exists for live run events through a dedicated backend route
 - Explicit stub stage boundaries remain in the final response mapping layer only
 - Thin CfHEE client foundation exists
 - Central stage model resolver skeleton exists
@@ -140,6 +141,7 @@ Current code state:
 - Answer Verification uses combined bounded rule checks, model-assisted evaluation when available, and at-most-one explicit regeneration
 - retrieval and final run output now preserve explicit upstream timeout/unavailable/failure distinctions instead of collapsing them into no-evidence behavior
 - bounded in-memory run lifecycle events are now emitted during execution and attached to dev run output
+- bounded run events may now also be transported over SSE through a dedicated streaming run route
 - final response mapping remains structurally simple
 
 ---
@@ -258,6 +260,7 @@ No production-ready behavior exists yet.
 The following DO exist in minimal structural form:
 - `/health`
 - dev-only pipeline execution route
+- dev-only SSE run streaming route
 - dev-only CfHEE verification routes
 - stub `AnswerRun` execution flow
 - practical deterministic query analysis
@@ -273,7 +276,8 @@ The following DO exist in minimal structural form:
 - Angular app shell with a dark main question/answer surface and thin `/runs/execute` integration
 - optional inspect drawer with richer run-detail rendering
 - bounded in-memory run event emission for dev/debug inspection
-- no live run preview transport or preview-text streaming implementation yet
+- SSE transport for bounded live run events
+- no frontend live preview or preview-text streaming implementation yet
 
 The following have been verified against the current live local CfHEE setup:
 - backend settings use `http://127.0.0.1:4210` as the configured CfHEE base URL
@@ -298,6 +302,7 @@ The following have been verified against the current live local CfHEE setup:
 - the inspect drawer trigger has been cleaned up to a compact right-edge handle and the floating inspect CTA is no longer part of the current frontend shell
 - the active stream design document is now integrated into the documentation system and the minimal run-event contract is defined conceptually only
 - backend `/runs/execute` now returns bounded in-memory run events, including run lifecycle events, stage lifecycle events, and one bounded generation preview snapshot when answer text exists
+- backend now exposes a dedicated SSE route for bounded live run event transport while preserving `/runs/execute`
 
 Any assumption that these exist is incorrect.
 

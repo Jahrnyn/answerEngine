@@ -4,27 +4,27 @@
 
 ## CURRENT FOCUS
 
-Active stream / live run preview implementation path after the first in-memory event foundation.
+Active stream / live run preview implementation path after backend SSE transport.
 
 Status:
-- the backend now emits bounded in-memory run events in dev run output
-- the next implementation step is to add a transport-backed preview path without weakening final verified answer semantics
+- the backend now exposes bounded live run events over SSE
+- the next implementation step is to connect that transport to a frontend preview surface without weakening final verified answer semantics
 
 ---
 
 ## CURRENT GOAL
 
-Extend the new run-event foundation toward staged live preview transport while preserving the verified-final-answer model.
+Build the first frontend-facing live preview path on top of the new SSE event transport while preserving the verified-final-answer model.
 
 ---
 
 ## SCOPE
 
 Included:
-- transport-ready active stream groundwork
-- staged backend preview implementation
+- frontend consumption groundwork for SSE-backed run events
+- staged live preview implementation
 - preservation of preview versus final answer semantics
-- minimal slices toward SSE or equivalent live run visibility
+- minimal slices toward usable live run visibility
 
 Excluded:
 - persistence
@@ -35,8 +35,8 @@ Excluded:
 
 ## DONE WHEN
 
-- bounded run events remain reliable and inspectable
-- the next slice can add transport without redefining event semantics
+- SSE-backed run events remain reliable and inspectable
+- the next slice can consume transport without redefining event semantics
 - preview output and final verified answer semantics remain clearly separated
 
 ---
@@ -47,6 +47,7 @@ Excluded:
 - chat-thread UX
 - major backend changes
 - full chat-style streaming redesign
+- backend transport redesign
 
 ---
 
