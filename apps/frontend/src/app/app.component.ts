@@ -2,7 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule, TitleCasePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 
 import {
   AnswerEngineApiService,
@@ -12,9 +11,12 @@ import {
   RetrievalPlan,
   RetrievalResult,
   RunErrorEntry,
+  RunEvent,
   ScopeInferenceResult,
   ScopeReference,
   StageModelConfig,
+  StreamRunHttpError,
+  StreamRunTerminalError,
   VerificationResult,
 } from './answer-engine-api.service';
 
@@ -29,6 +31,16 @@ type RequestErrorState = {
   detail?: string;
 };
 
+type RunViewState = 'idle' | 'running_preview' | 'completed' | 'failed';
+
+type PreviewState = {
+  runId: string | null;
+  currentStageId: string | null;
+  currentStageLabel: string;
+  latestMessage: string;
+  latestSummaryRows: KeyValueRow[];
+};
+
 @Component({
   selector: 'app-root',
   imports: [CommonModule, FormsModule, TitleCasePipe],
@@ -39,12 +51,16 @@ export class AppComponent {
   private readonly api = inject(AnswerEngineApiService);
 
   question = '';
-  isSubmitting = false;
   inspectOpen = false;
-  readonly runningStatus = 'Running the bounded answer pipeline...';
+  runViewState: RunViewState = 'idle';
 
   runResult: AnswerRunResponse | null = null;
   requestError: RequestErrorState | null = null;
+  previewState: PreviewState = this.emptyPreviewState();
+
+  get isSubmitting(): boolean {
+    return this.runViewState === 'running_preview';
+  }
 
   get hasRunResult(): boolean {
     return this.runResult !== null;
@@ -52,6 +68,28 @@ export class AppComponent {
 
   get isSubmitDisabled(): boolean {
     return this.isSubmitting || this.question.trim().length === 0;
+  }
+
+  get isRunningPreview(): boolean {
+    return this.runViewState === 'running_preview';
+  }
+
+  get runningStatus(): string {
+    if (!this.isRunningPreview) {
+      return '';
+    }
+
+    return this.previewState.currentStageLabel
+      ? `Running: ${this.previewState.currentStageLabel}`
+      : 'Running the bounded answer pipeline...';
+  }
+
+  get previewTitle(): string {
+    return this.previewState.currentStageLabel || 'Preparing run activity';
+  }
+
+  get previewSummaryRows(): KeyValueRow[] {
+    return this.previewState.latestSummaryRows;
   }
 
   get answerText(): string {
@@ -371,18 +409,28 @@ export class AppComponent {
       return;
     }
 
-    this.isSubmitting = true;
+    this.runViewState = 'running_preview';
     this.requestError = null;
     this.runResult = null;
+    this.previewState = {
+      runId: null,
+      currentStageId: null,
+      currentStageLabel: 'Starting run',
+      latestMessage: 'Opening the bounded run stream and waiting for the first stage event.',
+      latestSummaryRows: [],
+    };
 
     try {
-      this.runResult = await firstValueFrom(this.api.executeRun(trimmedQuestion));
+      this.runResult = await this.api.streamRun(trimmedQuestion, {
+        onEvent: (event) => this.applyRunEvent(event),
+      });
+      this.runViewState = this.runResult.verification_result.decision === 'cannot_answer' ? 'failed' : 'completed';
       this.inspectOpen = true;
+      this.previewState = this.emptyPreviewState();
     } catch (error) {
+      this.runViewState = 'failed';
       this.requestError = this.buildRequestErrorState(error);
       this.inspectOpen = false;
-    } finally {
-      this.isSubmitting = false;
     }
   }
 
@@ -407,6 +455,104 @@ export class AppComponent {
     }
 
     return `${normalized.slice(0, maxLength - 3).trimEnd()}...`;
+  }
+
+  private applyRunEvent(event: RunEvent): void {
+    this.previewState = {
+      runId: event.run_id,
+      currentStageId: event.stage_id ?? this.previewState.currentStageId,
+      currentStageLabel: this.stageLabelForEvent(event),
+      latestMessage: this.messageForEvent(event),
+      latestSummaryRows: this.summaryRowsForEvent(event),
+    };
+  }
+
+  private stageLabelForEvent(event: RunEvent): string {
+    if (event.event_type === 'run_started') {
+      return 'Run started';
+    }
+
+    if (event.event_type === 'run_completed') {
+      return 'Run completed';
+    }
+
+    if (event.event_type === 'run_failed') {
+      return 'Run failed';
+    }
+
+    return event.stage_id ? this.humanizeStageId(event.stage_id) : 'Pipeline activity';
+  }
+
+  private messageForEvent(event: RunEvent): string {
+    if (event.event_type === 'stage_preview') {
+      return 'Generation produced a bounded preview snapshot. Final verified answer will only appear after completion.';
+    }
+
+    return event.message || 'Pipeline activity updated.';
+  }
+
+  private summaryRowsForEvent(event: RunEvent): KeyValueRow[] {
+    const rows: KeyValueRow[] = [];
+
+    if (event.run_id) {
+      rows.push({ label: 'Run id', value: event.run_id });
+    }
+
+    const entries = Object.entries(event.summary ?? {})
+      .filter(([key]) => key !== 'final_run')
+      .slice(0, 4);
+
+    for (const [key, value] of entries) {
+      rows.push({
+        label: this.humanizeLabel(key),
+        value: this.summaryValueLabel(value),
+        tone: typeof value === 'string' && value.includes('failure') ? 'warn' : 'default',
+      });
+    }
+
+    if (rows.length === 0 && event.stage_id) {
+      rows.push({ label: 'Stage', value: this.humanizeStageId(event.stage_id) });
+    }
+
+    return rows;
+  }
+
+  private humanizeStageId(stageId: string): string {
+    return this.humanizeLabel(stageId).replace(/\b\w/g, (match) => match.toUpperCase());
+  }
+
+  private humanizeLabel(value: string): string {
+    return value.replace(/_/g, ' ');
+  }
+
+  private summaryValueLabel(value: unknown): string {
+    if (value === null || value === undefined) {
+      return 'n/a';
+    }
+
+    if (typeof value === 'boolean') {
+      return value ? 'yes' : 'no';
+    }
+
+    if (typeof value === 'string' || typeof value === 'number') {
+      return String(value);
+    }
+
+    if (Array.isArray(value)) {
+      return `${value.length} item(s)`;
+    }
+
+    return 'structured payload';
+  }
+
+  private emptyPreviewState(): PreviewState {
+    return {
+      runId: null,
+      currentStageId: null,
+      currentStageLabel: '',
+      latestMessage: '',
+      latestSummaryRows: [],
+    };
   }
 
   private boolLabel(value: boolean): string {
@@ -441,6 +587,34 @@ export class AppComponent {
   }
 
   private buildRequestErrorState(error: unknown): RequestErrorState {
+    if (error instanceof StreamRunTerminalError) {
+      return {
+        message: error.terminalEvent.message || 'Run failed before completion.',
+        detail: error.terminalEvent.stage_id
+          ? `Stage: ${this.humanizeStageId(error.terminalEvent.stage_id)}`
+          : 'The live run stream ended with a terminal failure event.',
+      };
+    }
+
+    if (error instanceof StreamRunHttpError) {
+      const detail = error.detail;
+      if (typeof detail === 'object') {
+        return {
+          message: detail.message || 'Backend stream request failed.',
+          detail: detail.category
+            ? `Category: ${detail.category}${detail.endpoint ? ` | Endpoint: ${detail.endpoint}` : ''}`
+            : detail.endpoint
+              ? `Endpoint: ${detail.endpoint}`
+              : undefined,
+        };
+      }
+
+      return {
+        message: detail,
+        detail: `HTTP ${error.status}`,
+      };
+    }
+
     if (error instanceof HttpErrorResponse) {
       const payload = error.error as { detail?: ExecuteRunHttpError | string } | null;
       const detail = payload?.detail;
@@ -466,6 +640,12 @@ export class AppComponent {
       return {
         message: error.status === 0 ? 'Cannot reach the backend service.' : 'Backend request failed.',
         detail: error.status ? `HTTP ${error.status}` : 'Check that the backend is running on port 8761.',
+      };
+    }
+
+    if (error instanceof Error) {
+      return {
+        message: error.message,
       };
     }
 

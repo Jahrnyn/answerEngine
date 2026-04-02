@@ -6,6 +6,22 @@ import { AnswerRunResponse } from './answer-engine-api.service';
 const mockRunResponse: AnswerRunResponse = {
   id: 'run-test',
   query: 'What do we know about the Bechtle CRM rollout?',
+  created_at: '2026-04-02T10:30:00Z',
+  answer_policy: {
+    retrieval_required: true,
+    max_retrieval_rounds: 1,
+    default_top_k: 4,
+    allow_multi_scope: false,
+    allow_regeneration: true,
+    verification_profile: 'bounded_v1',
+    response_style: 'grounded',
+  },
+  query_analysis: {
+    normalized_query: 'what do we know about the bechtle crm rollout?',
+    intent_type: 'question_answering',
+    requires_retrieval: true,
+    query_variants: [],
+  },
   stage_model_routing: [
     {
       stage_id: 'answer_generation',
@@ -96,6 +112,7 @@ const mockRunResponse: AnswerRunResponse = {
     },
   },
   errors: [],
+  events: [],
 };
 
 describe('AppComponent', () => {
@@ -155,5 +172,28 @@ describe('AppComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.inspect-handle')?.textContent).toContain('<<');
     expect(compiled.querySelector('.inspect-fab')).toBeNull();
+  });
+
+  it('should render a non-final running preview state separately from the final answer card', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    app.runViewState = 'running_preview';
+    app.previewState = {
+      runId: 'run-preview',
+      currentStageId: 'retrieval_execution',
+      currentStageLabel: 'Retrieval Execution',
+      latestMessage: 'Retrieval execution started.',
+      latestSummaryRows: [
+        { label: 'Run id', value: 'run-preview' },
+        { label: 'Executed rounds', value: '1' },
+      ],
+    };
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.preview-pill')?.textContent).toContain('Preview only');
+    expect(compiled.textContent).toContain('Retrieval Execution');
+    expect(compiled.textContent).toContain('Retrieval execution started.');
+    expect(compiled.querySelector('.answer-card')).toBeNull();
   });
 });

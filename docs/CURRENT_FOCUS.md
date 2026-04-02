@@ -4,17 +4,18 @@
 
 ## CURRENT FOCUS
 
-Active stream / live run preview implementation path after backend SSE transport.
+Active stream / live run preview refinement after initial frontend SSE consumption.
 
 Status:
 - the backend now exposes bounded live run events over SSE
-- the next implementation step is to connect that transport to a frontend preview surface without weakening final verified answer semantics
+- the frontend now consumes that transport for non-final stage/activity preview on the main surface
+- the next implementation step is to extend preview richness without weakening final verified answer semantics
 
 ---
 
 ## CURRENT GOAL
 
-Build the first frontend-facing live preview path on top of the new SSE event transport while preserving the verified-final-answer model.
+Refine live run preview on top of the existing SSE path while preserving the verified-final-answer model.
 
 ---
 
@@ -22,9 +23,10 @@ Build the first frontend-facing live preview path on top of the new SSE event tr
 
 Included:
 - frontend consumption groundwork for SSE-backed run events
-- staged live preview implementation
+- staged live preview refinement
 - preservation of preview versus final answer semantics
 - minimal slices toward usable live run visibility
+- preview-only generation-text work as a future incremental step
 
 Excluded:
 - persistence
@@ -36,7 +38,8 @@ Excluded:
 ## DONE WHEN
 
 - SSE-backed run events remain reliable and inspectable
-- the next slice can consume transport without redefining event semantics
+- frontend preview remains visibly non-final during execution
+- the next slice can enrich preview detail without redefining event semantics
 - preview output and final verified answer semantics remain clearly separated
 
 ---

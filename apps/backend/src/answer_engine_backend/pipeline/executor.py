@@ -60,7 +60,7 @@ class RunExecutor:
             stage_id: str | None = None,
             message: str | None = None,
             preview_text: str | None = None,
-            summary: dict[str, str | int | float | bool | None] | None = None,
+            summary: dict[str, object] | None = None,
         ) -> None:
             event = RunEvent(
                 run_id=run_id,
@@ -348,6 +348,25 @@ class RunExecutor:
             },
         )
 
+        timings = timer.build()
+        terminal_run_payload = {
+            "id": run_id,
+            "query": query,
+            "created_at": created_at,
+            "answer_policy": answer_policy.model_dump(mode="json"),
+            "stage_model_routing": [config.model_dump(mode="json") for config in stage_model_routing],
+            "query_analysis": query_analysis.model_dump(mode="json"),
+            "scope_inference": scope_inference.model_dump(mode="json"),
+            "retrieval_plan": retrieval_plan.model_dump(mode="json"),
+            "retrieval_result": retrieval_result.model_dump(mode="json"),
+            "context_pack": context_pack.model_dump(mode="json"),
+            "answer_result": answer_result.model_dump(mode="json"),
+            "verification_result": verification_result.model_dump(mode="json"),
+            "final_response": final_response.model_dump(mode="json"),
+            "timings": timings.model_dump(mode="json"),
+            "errors": [error.model_dump(mode="json") for error in errors],
+        }
+
         run_failed = bool(errors) or verification_result.decision == "cannot_answer"
         emit_event(
             "run_failed" if run_failed else "run_completed",
@@ -363,6 +382,7 @@ class RunExecutor:
                 "trace_id": final_response.trace_id,
                 "final_answer_text": final_response.answer_text,
                 "source_count": len(final_response.sources),
+                "final_run": terminal_run_payload,
             },
         )
 
@@ -380,7 +400,7 @@ class RunExecutor:
             answer_result=answer_result,
             verification_result=verification_result,
             final_response=final_response,
-            timings=timer.build(),
+            timings=timings,
             errors=errors,
             events=events,
         )

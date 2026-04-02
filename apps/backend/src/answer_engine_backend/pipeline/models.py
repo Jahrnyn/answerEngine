@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from time import perf_counter
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -143,7 +144,7 @@ class RunEvent(BaseModel):
     timestamp: datetime
     message: str | None = None
     preview_text: str | None = None
-    summary: dict[str, str | int | float | bool | None] = Field(default_factory=dict)
+    summary: dict[str, Any] = Field(default_factory=dict)
 
 
 class FinalResponse(BaseModel):

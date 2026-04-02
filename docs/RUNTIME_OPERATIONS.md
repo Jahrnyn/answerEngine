@@ -123,7 +123,9 @@ Current frontend dev behavior:
 
 - the Angular dev server runs on `http://127.0.0.1:8760`
 - the frontend proxies `/runs` and `/health` to the backend on `http://127.0.0.1:8761`
-- the main surface can submit a question to `POST /runs/execute`
+- the main surface now starts runs through `POST /runs/stream`
+- the frontend consumes bounded SSE run events for live stage/activity preview while the run is active
+- the main surface transitions into the existing final result view only after the terminal completion event arrives
 - returned final answer, certainty, verification decision, limitations, request failure state, and top run summary details are rendered on the page
 - the inspect side-panel can be opened or closed explicitly
 - the inspect panel can render run summary, scope, retrieval, verification, context preview, routing, timings, token visibility, and error details when a run payload is present
@@ -131,8 +133,9 @@ Current frontend dev behavior:
 Current backend active-stream note:
 
 - `POST /runs/stream` may now emit bounded run events over SSE
-- this is a backend transport surface only at present
-- it does not imply frontend live preview rendering or unverified final-answer streaming
+- the frontend now consumes those events for a non-final running-preview shell on the main surface
+- this still does not imply unverified final-answer streaming
+- generation preview text streaming is not implemented yet
 
 ---
 

@@ -65,3 +65,7 @@
 - Implemented Slice 15 with a dedicated SSE transport route for bounded run events while preserving the existing synchronous `/runs/execute` behavior.
 - Added backend streaming of `run_started`, stage lifecycle events, bounded generation preview snapshots, and terminal `run_completed` or `run_failed` events over `POST /runs/stream`.
 - Re-checked the backend locally so `/health` and `/runs/execute` remain intact and the new SSE route emits ordered live event payloads with terminal completion or failure behavior.
+- Implemented Slice 16 with frontend SSE consumption for `POST /runs/stream` and a non-final live run preview shell on the main answer surface.
+- Added explicit frontend preview-state handling for current stage, bounded activity messages, and stage-summary visibility during execution, followed by a clean transition into the existing final verified-answer view on terminal completion.
+- Added a bounded terminal SSE payload carrying the final run data needed for the frontend to populate the final result and inspect drawer without rerunning the pipeline.
+- Re-checked the frontend build locally, re-checked backend compile/import sanity, and re-checked the SSE path with a controlled local route invocation that confirms ordered events and a terminal `final_run` payload.
